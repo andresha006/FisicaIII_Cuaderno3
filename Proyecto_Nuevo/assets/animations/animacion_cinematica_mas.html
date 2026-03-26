@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinemática M.A.S. - Laboratorio Virtual Premium</title>
+
+    <!-- Google Fonts for Typography -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Premium Glassmorphism & Aurora Theme */
+            --bg-deep: #030014;
+            --glass-bg: rgba(15, 12, 41, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+
+            /* The Core Physics Colors (From the user's reference spirit, but elevated) */
+            --color-x: #00d2ff;
+            /* Position - Cyan */
+            --color-v: #3a7bd5;
+            /* Velocity - Blue */
+            --color-a: #c33764;
+            /* Acceleration - Magenta/Redish */
+            --color-grid: rgba(255, 255, 255, 0.15);
+            --color-time: #f8f9fa;
+            /* The playhead line */
+
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+
+            --font-ui: 'Outfit', sans-serif;
+            --font-math: 'Space Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* AURORA BACKGROUND ANIMATIONS */
+        .aurora-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .aurora-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.6;
+            animation: drift 20s infinite alternate ease-in-out;
+        }
+
+        .orb-1 {
+            width: 60vw;
+            height: 60vh;
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.15));
+            top: -20%;
+            left: -10%;
+        }
+
+        .orb-2 {
+            width: 50vw;
+            height: 50vh;
+            background: linear-gradient(135deg, rgba(195, 55, 100, 0.15), rgba(29, 38, 113, 0.1));
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(5%, 5%) scale(1.1);
+            }
+        }
+
+        /* HEADER */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(5px);
+        }
+
+        .brand h1 {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, #fff, #adb5bd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand span {
+            font-family: var(--font-math);
+            font-size: 0.8rem;
+            color: var(--color-x);
+            margin-left: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            padding: 1.5rem 2.5rem;
+            gap: 2rem;
+            height: calc(100vh - 70px);
+        }
+
+        /* CANVAS AREA (The Graphs) */
+        .graphs-container {
+            flex: 1;
+            position: relative;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            /* Emphasize interactivity on canvas */
+        }
+
+        /* OVERLAY LABELS FOR GRAPHS */
+        .graph-label {
+            position: absolute;
+            right: 20px;
+            font-family: var(--font-math);
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* These heights will be calibrated based on JS render logic later */
+        #lbl-x {
+            top: calc(16.6% - 15px);
+            color: var(--color-x);
+        }
+
+        #lbl-v {
+            top: calc(50% - 15px);
+            color: var(--color-v);
+        }
+
+        #lbl-a {
+            top: calc(83.3% - 15px);
+            color: var(--color-a);
+        }
+
+        /* PLAYHEAD DRAGGER HINT */
+        .playhead-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            pointer-events: none;
+            font-family: var(--font-math);
+        }
+
+        /* CONTROL PANEL */
+        .side-panel {
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        /* STATE READOUTS */
+        .state-readout {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+            align-items: center;
+            font-family: var(--font-math);
+            font-size: 0.9rem;
+        }
+
+        .s-val {
+            font-weight: 700;
+            text-align: right;
+        }
+
+        /* PREMIUM CONTROLS */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .s-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .s-out {
+            color: var(--text-main);
+            font-weight: 600;
+            font-family: var(--font-math);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+        }
+
+        /* ANIMATION BUTTONS */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(58, 123, 213, 0.2));
+            border-color: rgba(0, 210, 255, 0.4);
+            color: #fff;
+        }
+
+        .btn.primary:hover {
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Math display for formulas */
+        .math-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: var(--font-math);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-top: auto;
+        }
+
+        .math-box span.x {
+            color: var(--color-x);
+        }
+
+        .math-box span.v {
+            color: var(--color-v);
+        }
+
+        .math-box span.a {
+            color: var(--color-a);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="aurora-container">
+        <div class="aurora-orb orb-1"></div>
+        <div class="aurora-orb orb-2"></div>
+    </div>
+
+    <header>
+        <div class="brand">
+            <h1>Analytics Oscilatorio<span>// CINEMÁTICA</span></h1>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            <i class="fa-solid fa-microchip"></i> Motor de Precisión Activo
+        </div>
+    </header>
+
+    <main>
+        <!-- Gráficas Interactivas -->
+        <div class="graphs-container" id="gContainer">
+            <canvas id="kinematicCanvas"></canvas>
+
+            <div class="graph-label" id="lbl-x"><i class="fa-solid fa-ruler-horizontal"></i> Elongación x(t)</div>
+            <div class="graph-label" id="lbl-v"><i class="fa-solid fa-gauge-high"></i> Velocidad v(t)</div>
+            <div class="graph-label" id="lbl-a"><i class="fa-solid fa-rocket"></i> Aceleración a(t)</div>
+
+            <div class="playhead-hint">Arrástrame sobre el cristal para alterar el tiempo local</div>
+        </div>
+
+        <!-- Panel de Control Analítico -->
+        <div class="side-panel">
+            <div class="control-card">
+                <div class="card-title"><i class="fa-solid fa-tower-broadcast"></i> Telemetría en t = <span
+                        id="teleT">0.00</span>s</div>
+
+                <div class="state-readout">
+                    <span style="color: var(--color-x);">x(t)</span>
+                    <span class="s-val" id="valX" style="color: var(--color-x);">0.00 m</span>
+
+                    <span style="color: var(--color-v);">v(t)</span>
+                    <span class="s-val" id="valV" style="color: var(--color-v);">0.00 m/s</span>
+
+                    <span style="color: var(--color-a);">a(t)</span>
+                    <span class="s-val" id="valA" style="color: var(--color-a);">0.00 m/s²</span>
+                </div>
+            </div>
+
+            <div class="control-card" style="flex: 1;">
+                <div class="card-title"><i class="fa-solid fa-sliders"></i> Calibración del Sistema</div>
+
+                <div class="slider-group">
+                    <div class="s-header">
+                        <span>Amplitud ($A$)</span>
+                        <span class="s-out" id="outA">100 m</span>
+                    </div>
+                    <input type="range" id="slA" min="10" max="200" step="5" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <div class="s-header">
+                        <span>Frec. Angular ($\omega$)</span>
+                        <span class="s-out" id="outW">1.0 rad/s</span>
+                    </div>
+                    <!-- Afecta visualmente cuantos ciclos se ven -->
+                    <input type="range" id="slW" min="0.5" max="3.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="slider-group">
+                    <div class="s-header">
+                        <span>Fase Inicial ($\phi$)</span>
+                        <span class="s-out" id="outPhi">0°</span>
+                    </div>
+                    <input type="range" id="slPhi" min="0" max="360" step="15" value="0">
+                </div>
+
+                <div class="btn-group" style="margin-top: 1rem;">
+                    <button class="btn primary" id="btnSinc"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    <button class="btn" id="btnReset"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+
+                <div class="math-box">
+                    <div><span class="x">x(t)</span> = A · cos(ωt + φ)</div>
+                    <div><span class="v">v(t)</span> = -A·ω · sin(ωt + φ)</div>
+                    <div><span class="a">a(t)</span> = -A·ω² · cos(ωt + φ)</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('kinematicCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('gContainer');
+
+        // UI Values
+        const slA = document.getElementById('slA');
+        const slW = document.getElementById('slW');
+        const slPhi = document.getElementById('slPhi');
+
+        const outA = document.getElementById('outA');
+        const outW = document.getElementById('outW');
+        const outPhi = document.getElementById('outPhi');
+
+        const valX = document.getElementById('valX');
+        const valV = document.getElementById('valV');
+        const valA = document.getElementById('valA');
+        const teleT = document.getElementById('teleT');
+
+        const btnSinc = document.getElementById('btnSinc');
+        const btnReset = document.getElementById('btnReset');
+
+        // Physics State
+        let A = 100;      // Amplitude
+        let omega = 1.0;  // Angular Frequency
+        let phi = 0;      // Phase in rad
+        let time = 0;     // Current physics time
+        let isPlaying = true;
+
+        // We will map pixel width to a fixed time domain (e.g., 0 to 4*PI seconds)
+        // so that the wave fits nicely and scaling W just changes density.
+        const timeDomain = 4 * Math.PI;
+
+        // Layout State
+        let W, H;
+        let hX, hV, hA; // The Y-centers for each graph
+        let rowH; // Height for one graph section
+
+        // Interaction State (Scrubbing)
+        let isScrubbing = false;
+        let scrubX = 0; // The X pixel position of the playhead
+
+        function resize() {
+            W = canvas.width = container.clientWidth;
+            H = canvas.height = container.clientHeight;
+
+            rowH = H / 3;
+            hX = rowH / 2;
+            hV = rowH + (rowH / 2);
+            hA = rowH * 2 + (rowH / 2);
+
+            // Adjust scrubber position based on current time
+            scrubX = (time / timeDomain) * W;
+            if (scrubX > W) {
+                // Wrap around time if it exceeds screen (like an oscilloscope)
+                time = time % timeDomain;
+                scrubX = (time / timeDomain) * W;
+            }
+        }
+
+        window.addEventListener('resize', resize);
+
+        // Core Math Functions Based on the Original Image Equations
+        // The image shows a COS wave for position at t=0 (starts at crest if alpha/phi=0)
+        // x(t) = A * cos(w*t + phi)
+        // v(t) = -A*w * sin(w*t + phi)
+        // a(t) = -A*w^2 * cos(w*t + phi)
+
+        function getX(t) { return A * Math.cos(omega * t + phi); }
+        function getV(t) { return -A * omega * Math.sin(omega * t + phi); }
+        function getA(t) { return -A * Math.pow(omega, 2) * Math.cos(omega * t + phi); }
+
+        // DRAWING ROUTINES
+
+        function drawGridLines() {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+
+            // Seperator lines between graphs
+            ctx.beginPath();
+            ctx.moveTo(0, rowH); ctx.lineTo(W, rowH);
+            ctx.moveTo(0, rowH * 2); ctx.lineTo(W, rowH * 2);
+            ctx.stroke();
+
+            // Horizontal Axes for X, V, A
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(0, hX); ctx.lineTo(W, hX);
+            ctx.moveTo(0, hV); ctx.lineTo(W, hV);
+            ctx.moveTo(0, hA); ctx.lineTo(W, hA);
+            ctx.stroke();
+
+            // The mathematical period is T = 2*PI / omega
+            const T = (2 * Math.PI) / omega;
+
+            // Draw vertical dashed lines for T/4, T/2, 3T/4, etc...
+            // Similar to the green dashed lines in the user's reference image
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.15)'; // Cyan tint
+            ctx.setLineDash([5, 5]);
+            // Find how many quarter periods fit in our timeDomain
+            const quarterT = T / 4;
+            const maxSegments = Math.ceil(timeDomain / quarterT);
+
+            ctx.font = '11px "Space Mono"';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.textAlign = 'center';
+
+            for (let i = 0; i <= maxSegments; i++) {
+                const tLine = i * quarterT;
+                if (tLine > timeDomain) break;
+
+                const pxX = (tLine / timeDomain) * W;
+
+                ctx.beginPath();
+                ctx.moveTo(pxX, 0);
+                ctx.lineTo(pxX, H);
+                ctx.stroke();
+
+                // Labels like T/4, T/2 on the very top
+                let label = "";
+                if (i === 1) label = "T/4";
+                else if (i === 2) label = "T/2";
+                else if (i === 3) label = "3T/4";
+                else if (i === 4) label = "T";
+                else if (i > 4 && i % 4 === 0) label = `${i / 4}T`;
+                else if (i > 4 && i % 2 === 0) label = `${i / 2}T/2`;
+
+                if (label && pxX > 20) {
+                    ctx.fillText(label, pxX, 20);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawWave(funcY, centerY, baseColor, colorGlow, verticalScale = 1) {
+            ctx.save();
+            ctx.beginPath();
+
+            // Calculate a normalization factor so V and A don't blow off the screen.
+            // Amplitude drawn will be bounded within rowH / 2.
+            // A max allowed visual amplitude: (rowH/2) * 0.8
+            const visualAmp = (rowH / 2) * 0.8;
+
+            // Standardize scaling: 
+            // For X: Amplitude is A.
+            // For V: Max is A*w
+            // For A: Max is A*w^2
+            // verticalScale normalizes this so they all graph proportionally visual on their axes.
+            // Draw from t=0 to timeDomain across W pixels
+            for (let px = 0; px <= W; px++) {
+                const t = (px / W) * timeDomain;
+                const physicsVal = funcY(t);
+
+                const visualY = centerY - (physicsVal * verticalScale * visualAmp);
+
+                if (px === 0) ctx.moveTo(px, visualY);
+                else ctx.lineTo(px, visualY);
+            }
+
+            ctx.strokeStyle = baseColor;
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = colorGlow;
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function renderPlayhead() {
+            ctx.save();
+
+            // Playhead Line
+            ctx.beginPath();
+            ctx.moveTo(scrubX, 0);
+            ctx.lineTo(scrubX, H);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+
+            // Calculate current Time at playhead
+            const localT = (scrubX / W) * timeDomain;
+            teleT.innerText = localT.toFixed(2);
+
+            // Intersection dots
+            // Need the scale factors used in drawing
+            const visualAmp = (rowH / 2) * 0.8;
+
+            // X Graph
+            const xVal = getX(localT);
+            const scaleX = 1 / A; // Max physics is A
+            drawDot(scrubX, hX - (xVal * scaleX * visualAmp), '#00d2ff', xVal, 'm', valX);
+
+            // V Graph
+            const vVal = getV(localT);
+            const maxV = A * omega;
+            const scaleV = maxV === 0 ? 0 : 1 / maxV;
+            drawDot(scrubX, hV - (vVal * scaleV * visualAmp), '#3a7bd5', vVal, 'm/s', valV);
+
+            // A Graph
+            const aVal = getA(localT);
+            const maxA = A * omega * omega;
+            const scaleA = maxA === 0 ? 0 : 1 / maxA;
+            drawDot(scrubX, hA - (aVal * scaleA * visualAmp), '#c33764', aVal, 'm/s²', valA);
+
+            ctx.restore();
+        }
+
+        function drawDot(px, py, color, val, unit, domElement) {
+            ctx.beginPath();
+            ctx.arc(px, py, 6, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Subtly display value floating
+            ctx.fillStyle = '#fff';
+            ctx.font = '500 12px "Space Mono"';
+            ctx.textAlign = 'left';
+            ctx.fillText(val.toFixed(2), px + 10, py - 10);
+
+            // Update UI
+            domElement.innerText = `${val.toFixed(2)} ${unit}`;
+        }
+
+
+        // --- MAIN LOOP ---
+        let lastRealTime = performance.now();
+
+        function loop() {
+            const currentRealTime = performance.now();
+            const dt = (currentRealTime - lastRealTime) / 1000;
+            lastRealTime = currentRealTime;
+
+            if (isPlaying && !isScrubbing) {
+                // If the user isn't scrubbing, auto advance the playhead based on real time
+                time += dt;
+
+                // Wrap around like an oscilloscope
+                if (time > timeDomain) time = 0;
+
+                scrubX = (time / timeDomain) * W;
+            }
+
+            // Render
+            ctx.clearRect(0, 0, W, H);
+
+            drawGridLines();
+
+            // Draw the global static waves
+            // Visual scaler logic: 
+            // X goes from -A to +A. Scaler = 1/A
+            // V goes from -Aw to +Aw. Scaler = 1/(A*w)
+            // A goes from -Aw^2 to +Aw^2. Scaler = 1/(A*w^2)
+
+            // Safegurard division by zero
+            const maxV = A * omega;
+            const maxA = A * Math.pow(omega, 2);
+
+            drawWave(getX, hX, '#00d2ff', 'rgba(0, 210, 255, 0.4)', 1 / A);
+            drawWave(getV, hV, '#3a7bd5', 'rgba(58, 123, 213, 0.4)', maxV === 0 ? 0 : 1 / maxV);
+            drawWave(getA, hA, '#c33764', 'rgba(195, 55, 100, 0.4)', maxA === 0 ? 0 : 1 / maxA);
+
+            renderPlayhead();
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- INTERACTIVITY ---
+
+        function updateFromUI() {
+            A = parseFloat(slA.value);
+            omega = parseFloat(slW.value);
+            const deg = parseFloat(slPhi.value);
+            phi = deg * (Math.PI / 180);
+
+            outA.innerText = `${A.toFixed(0)} m`;
+            outW.innerText = `${omega.toFixed(1)} r/s`;
+            outPhi.innerText = `${deg.toFixed(0)}°`;
+        }
+
+        slA.addEventListener('input', updateFromUI);
+        slW.addEventListener('input', updateFromUI);
+        slPhi.addEventListener('input', updateFromUI);
+
+        btnSinc.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnSinc.innerHTML = '<i class="fa-solid fa-pause"></i> Pausar';
+                btnSinc.classList.add('primary');
+            } else {
+                btnSinc.innerHTML = '<i class="fa-solid fa-play"></i> Ejecutar';
+                btnSinc.classList.remove('primary');
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            time = 0;
+            scrubX = 0;
+            if (!isPlaying) {
+                isPlaying = true;
+                btnSinc.innerHTML = '<i class="fa-solid fa-pause"></i> Pausar';
+                btnSinc.classList.add('primary');
+            }
+        });
+
+        // Mouse Scrubbing Engine
+        canvas.addEventListener('mousedown', (e) => {
+            isScrubbing = true;
+            scrubX = e.clientX - canvas.getBoundingClientRect().left;
+            time = (scrubX / W) * timeDomain;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isScrubbing) return;
+            const rect = canvas.getBoundingClientRect();
+            let mouseX = e.clientX - rect.left;
+
+            // Clamp inside canvas
+            if (mouseX < 0) mouseX = 0;
+            if (mouseX > W) mouseX = W;
+
+            scrubX = mouseX;
+            time = (scrubX / W) * timeDomain;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isScrubbing = false;
+        });
+
+        // Touch support for scrubber
+        canvas.addEventListener('touchstart', (e) => {
+            isScrubbing = true;
+            scrubX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+            time = (scrubX / W) * timeDomain;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isScrubbing) return;
+            e.preventDefault(); // Prevent scrolling
+            const rect = canvas.getBoundingClientRect();
+            let touchX = e.touches[0].clientX - rect.left;
+            if (touchX < 0) touchX = 0;
+            if (touchX > W) touchX = W;
+            scrubX = touchX;
+            time = (scrubX / W) * timeDomain;
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => isScrubbing = false);
+
+        // INIT
+        resize();
+        updateFromUI();
+        btnSinc.innerHTML = '<i class="fa-solid fa-pause"></i> Pausar'; // Initial state is playing
+        requestAnimationFrame(loop);
+    </script>
+
+</body>
+
+</html>

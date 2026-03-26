@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio Virtual MAS — Energía + Panel de Instrumentos v7.1</title>
+  <!-- Evitar conflictos Plotly/MathJax -->
+  <script>window.PlotlyConfig={MathJaxConfig:'local'};</script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script>
+    window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:'global'}};
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220; --grid:#1a2438; --ink:#eaf2ff; --muted:#9fb0cc;
+      --panel:#162033; --panel2:#1e2a44; --border:#2b3e67;
+      --cyan:#22d3ee; --green:#34d399; --yellow:#fbbf24; --pink:#ff6f91; --vio:#a78bfa;
+      --orange: #ff9a2e;
+      --kin:var(--green); --pot:var(--cyan); --tot:var(--yellow); --force:var(--pink);
+      --r:14px; --shadow:0 12px 28px rgba(0,0,0,.35); --inset: inset 0 4px 8px rgba(0,0,0,.4);
+      --mono:'Roboto Mono', monospace; --disp:'Orbitron', system-ui; --body:'Inter', system-ui;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:radial-gradient(1200px 500px at 50% -200px,#121a2d 0,#0b1220 60%);color:var(--ink);font-family:var(--body)}
+    body{min-height:100vh}
+    /* ---------- Layout ---------- */
+    header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.75);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    .headWrap{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 16px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .spark{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7cf7ff,#4c6dff);box-shadow:0 0 20px #27d2ff}
+    h1{margin:0;font:700 clamp(16px,2.4vw,22px) var(--disp);letter-spacing:.6px}
+    .led{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0e172b}
+    .led-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 10px currentColor}
+    .led.on{color:#8bffae}.led.off{color:#ff7a93}
+    .helpBtn{border:none;border-radius:999px;padding:10px 14px;font-weight:800;color:#061021;background:linear-gradient(135deg,#22d3ee,#4c6dff);box-shadow:0 8px 20px rgba(46,155,255,.35);cursor:pointer}
+    .bench{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:16px;max-width:1400px;margin:0 auto}
+    .panel{background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow),var(--inset);padding:14px}
+    .panel h2{margin:0 0 10px 0;font:700 1rem var(--disp);display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .displayCol{display:flex;flex-direction:column;gap:18px}
+    .ctrlCol{display:flex;flex-direction:column;gap:18px}
+    /* ---------- Escena ---------- */
+    .canvasWrap{position:relative;width:100%;min-height:320px;aspect-ratio: 2.2/1;background:#000;border:2px solid #333;border-radius:10px;box-shadow:var(--inset);overflow:hidden}
+    #scene{width:100%;height:100%}
+    .noteE{position:absolute;right:10px;top:10px;color:var(--yellow);font-weight:800;background:rgba(0,0,0,0.5);padding:2px 6px; border-radius:4px;}
+    
+    /* ---------- Monitor de Energía (Barras) ---------- */
+    .energy-monitor { display: flex; flex-direction: column; gap: 12px; }
+    .energy-bar { display: grid; grid-template-columns: 80px 1fr auto; align-items: center; gap: 10px; }
+    .energy-bar h4 { font-size: 0.85rem; margin: 0; color: var(--muted); text-align: right; }
+    .bar-track { background-color: #0b0b0b; border-radius: 6px; height: 22px; border: 1px solid #303030; box-shadow: var(--inset); overflow: hidden; }
+    .bar-fill { height: 100%; width: 0%; border-radius: 5px; transition: width 0.1s linear; box-shadow: 0 0 12px currentColor; }
+    .bar-value { font: 700 1rem var(--mono); }
+
+    /* ---------- Plot ---------- */
+    .plot{padding:4px}
+    .footer{margin-top:6px;text-align:center;color:#a9bfff;font-weight:800}
+    /* ---------- Telemetría ---------- */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .cell{background:#0f1526;border:1px solid #2a3c61;border-radius:10px;padding:10px;box-shadow:var(--inset)}
+    .cell label{display:block;font-size:.75rem;color:var(--muted)}
+    .cell .v{font:700 1.1rem var(--mono)}
+    
+    /* ---------- Perillas Mejoradas ---------- */
+    .knobGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:20px}
+    .kgroup{text-align:center}
+    .kgroup label{display:block;font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:12px}
+    .knob{
+      --size: 82px; --accent: var(--cyan);
+      --ticks: repeating-conic-gradient(from -135deg, #566a93 0 1.5deg, transparent 2deg 9deg);
+      width: var(--size); height: var(--size); position: relative; margin-inline: auto;
+      border-radius: 50%; cursor: grab; touch-action: none; user-select: none;
+    }
+    .knob:active{cursor:grabbing}
+    .ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: 
+        radial-gradient(circle at 50% 150%, rgba(255,255,255,0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, #202838 55%, #121822 100%),
+        var(--ticks);
+      border: 2px solid #0d111a;
+      box-shadow: inset 0 6px 12px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.5), 0 0 0 3px #111;
+    }
+    .hub {
+      position: absolute; inset: 22%; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%,#6a7d9f,#1c2433 70%);
+      border: 1px solid #0d111a; box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .pointer {
+      position: absolute; left: 50%; top: 10%; width: 3px; height: 40%;
+      transform-origin: 50% 100%; transform: translateX(-50%) rotate(-135deg);
+      background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+    }
+    .tooltip{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);padding:4px 8px;border-radius:6px;font:700 12px var(--mono);background:#000;color:#a7ff9f;border:1px solid #263041;display:none}
+    .knob.dragging .tooltip{display:block}
+    .kgroup output{display:inline-block;margin-top:12px;padding:4px 8px;border-radius:6px;background:#000;color:#a7ff9f;font:700 .95rem var(--mono);box-shadow:var(--inset)}
+    
+    .btnGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+    .btn{border:1px solid var(--border);background:linear-gradient(145deg,#2a3547,#1e2735);color:var(--ink);padding:12px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 2px 3px rgba(0,0,0,.3)}
+    .btn:hover{border-color:var(--cyan)}
+    .btn:active{transform:translateY(1px);box-shadow:inset 0 2px 3px rgba(0,0,0,.5)}
+    .btn.primary{background:linear-gradient(135deg,var(--cyan),#1e90ff);color:#061021;border:none}
+    .btn.emer{background:linear-gradient(135deg,#ff9aa8,#ff4d6d);border:none;color:#061021}
+    
+    /* ---------- Controles de Estilo del Gráfico ---------- */
+    #style-toggle {
+      position: absolute; top: 8px; left: 8px; z-index: 5;
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      background: rgba(11, 18, 32, 0.7); backdrop-filter: blur(4px);
+      color: var(--muted); display: grid; place-items: center; cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    #style-toggle:hover { background: var(--panel); color: var(--ink); }
+    #style-panel {
+      position: absolute; top: 50px; left: 8px; z-index: 4;
+      background: rgba(11, 18, 32, 0.8); backdrop-filter: blur(6px);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px; width: 220px;
+      box-shadow: var(--shadow);
+      transform: translateY(-10px); opacity: 0; visibility: hidden;
+      transition: transform .2s, opacity .2s, visibility .2s;
+    }
+    #style-panel.open { transform: translateY(0); opacity: 1; visibility: visible; }
+    .style-group { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .style-group label { font-size: 0.8rem; font-weight: 600; }
+    .style-group input, .style-group select {
+      background: #0b1220; color: var(--ink); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px; width: 100%;
+    }
+    input[type="color"] { padding: 2px; height: 30px; }
+
+    /* ---------- Modal ---------- */
+    .modal{position:fixed;inset:0;display:none;place-items:center;padding:16px;z-index:20}
+    .modal.open{display:grid}
+    .bk{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+    .win{position:relative;width:min(960px,92vw);max-height:85vh;overflow:auto;background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--border);border-radius:14px;padding:24px; line-height:1.7;}
+    .win h3 { color: var(--cyan); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 20px; }
+    .win code { background: #0b1220; padding: 2px 6px; border-radius: 4px; font-family: var(--mono); }
+    .closex{position:sticky;top:0;margin-left:auto;width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:#0f1730;color:#eaf2ff;display:grid;place-items:center;animation: spin 6s linear infinite;cursor:pointer}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    /* ---------- Responsivo ---------- */
+    @media (max-width: 1080px){.bench{grid-template-columns:1fr}}
+    @media (max-width: 760px){
+      .bench{padding:12px}
+      .energy-monitor{gap:8px;}
+      .energy-bar{grid-template-columns:60px 1fr auto; gap: 8px;}
+      .grid{grid-template-columns:1fr}
+      .btnGrid{grid-template-columns:1fr 1fr}
+      .canvasWrap{aspect-ratio:1.25/1;min-height:260px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="headWrap">
+      <div class="brand"><div class="spark"></div><h1>Laboratorio Virtual — Energía en el MAS</h1></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="led off" id="led"><span class="led-dot">●</span><span id="ledTxt">STOP</span></div>
+        <button id="helpBtn" class="helpBtn">Ayuda & Teoría</button>
+      </div>
+    </div>
+  </header>
+  <main class="bench">
+    <!-- Columna de visualización -->
+    <div class="displayCol">
+      <section class="panel">
+        <h2>Visor de Energía Potencial $U(x)$ y Fuerza</h2>
+        <div class="canvasWrap">
+          <canvas id="scene"></canvas>
+          <div class="noteE" id="Etxt">E = 0 J</div>
+          <!-- Botón de Controles de Estilo -->
+          <button id="style-toggle" title="Ajustes de Estilo del Gráfico">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+          <!-- Panel de Controles de Estilo -->
+          <div id="style-panel">
+            <div class="style-group">
+              <label for="curveColor">Color</label>
+              <input type="color" id="curveColor">
+            </div>
+            <div class="style-group">
+              <label for="curveWidth">Grosor</label>
+              <input type="range" id="curveWidth" min="1" max="8" step="0.5">
+            </div>
+            <div class="style-group">
+              <label for="curveStyle">Estilo</label>
+              <select id="curveStyle">
+                <option value="solid">Sólida</option>
+                <option value="dashed">Discontinua</option>
+                <option value="dotted">Punteada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Monitor de Energía</h2>
+        <div class="energy-monitor">
+          <div class="energy-bar">
+            <h4>$E_k$ (Cinética)</h4>
+            <div class="bar-track"><div id="barEk" class="bar-fill" style="background:var(--kin)"></div></div>
+            <div id="vEk" class="bar-value" style="color:var(--kin)">0.00 J</div>
+          </div>
+          <div class="energy-bar">
+            <h4>$U_k$ (Potencial)</h4>
+            <div class="bar-track"><div id="barUk" class="bar-fill" style="background:var(--pot)"></div></div>
+            <div id="vUk" class="bar-value" style="color:var(--pot)">0.00 J</div>
+          </div>
+          <div class="energy-bar">
+            <h4>$E$ (Total)</h4>
+            <div class="bar-track"><div id="barE" class="bar-fill" style="background:var(--tot)"></div></div>
+            <div id="vE" class="bar-value" style="color:var(--tot)">0.00 J</div>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Registrador Gráfico</h2>
+        <div class="plot"><div id="plot" style="height:380px"></div></div>
+        <div class="footer">Creado por Msc Néstor Fabio Montoya Palacios y asistido por IA</div>
+      </section>
+    </div>
+    <!-- Columna de control -->
+    <aside class="ctrlCol">
+      <section class="panel">
+        <h2>Consola de Control</h2>
+        <div class="knobGrid">
+          <div class="kgroup">
+            <label for="m">Masa (kg)</label>
+            <div class="knob" id="k-m" role="slider" aria-label="Masa" tabindex="0" data-param="m" data-min="0.1" data-max="5" data-step="0.05" data-value="0.85">
+              <div class="ring"></div><div class="hub"></div><div class="pointer"></div><div class="tooltip"></div>
+            </div>
+            <output id="mOut">0.85</output>
+          </div>
+          <div class="kgroup">
+            <label for="T">Periodo (s)</label>
+            <div class="knob" id="k-T" role="slider" aria-label="Periodo" tabindex="0" data-param="T" data-min="0.5" data-max="6" data-step="0.05" data-value="2">
+              <div class="ring"></div><div class="hub"></div><div class="pointer" style="--accent:var(--vio)"></div><div class="tooltip"></div>
+            </div>
+            <output id="TOut">2.00</output>
+          </div>
+          <div class="kgroup">
+            <label for="A">Amplitud (m)</label>
+            <div class="knob" id="k-A" role="slider" aria-label="Amplitud" tabindex="0" data-param="A" data-min="0.5" data-max="6" data-step="0.05" data-value="3.5">
+              <div class="ring"></div><div class="hub"></div><div class="pointer" style="--accent:var(--yellow)"></div><div class="tooltip"></div>
+            </div>
+            <output id="AOut">3.50</output>
+          </div>
+          <div class="kgroup">
+            <label for="phi">Fase φ (°)</label>
+            <div class="knob" id="k-phi" role="slider" aria-label="Fase" tabindex="0" data-param="phi" data-min="-180" data-max="180" data-step="1" data-value="0">
+              <div class="ring"></div><div class="hub"></div><div class="pointer" style="--accent:var(--pink)"></div><div class="tooltip"></div>
+            </div>
+            <output id="phiOut">0</output>
+          </div>
+        </div>
+        <div class="btnGrid">
+          <button id="play" class="btn primary">▶ INICIAR</button>
+          <button id="pause" class="btn">⏸ PAUSAR</button>
+          <button id="reset" class="btn">⟲ RESET</button>
+          <button id="clear" class="btn">🧹 LIMPIAR REGISTRO</button>
+          <button id="estop" class="btn emer">⛔ EMERGENCY STOP</button>
+          <button id="step" class="btn">≫ Paso +</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Telemetría Instantánea</h2>
+        <div class="grid">
+          <div class="cell"><label>Posición $x$</label><div class="v" id="vx">0.00 m</div></div>
+          <div class="cell"><label>Velocidad $v$</label><div class="v" id="vv">0.00 m/s</div></div>
+          <div class="cell"><label>Fuerza $F=-kx$</label><div class="v" id="vF" style="color:var(--force)">0.00 N</div></div>
+          <div class="cell"><label>Constante $k$</label><div class="v" id="vk">0.00 N/m</div></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Modelo y Fórmulas</h2>
+        <div style="line-height:1.6">
+          <p><b>Ecuación de movimiento:</b> $x(t)=A\cos(\omega t+\varphi)$</p>
+          <p><b>Energías:</b> $E_k=\tfrac12 m v^2$, $U_k=\tfrac12 kx^2$, $E=\tfrac12 kA^2$</p>
+        </div>
+      </section>
+    </aside>
+  </main>
+  <!-- Modal de ayuda ampliado -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="Ayuda y Fundamento Teórico del MAS">
+    <div class="bk"></div>
+    <div class="win">
+      <button class="closex" title="Cerrar">✕</button>
+      <h2>Guía del Laboratorio Virtual: Energía en el MAS</h2>
+      <p>Este laboratorio simula un sistema masa-resorte ideal, un ejemplo clásico de <strong>Movimiento Armónico Simple (MAS)</strong>. Permite explorar la relación entre posición, velocidad, fuerza y energía de una partícula oscilante.</p>
+      
+      <h3>Fundamento Teórico</h3>
+      <p>Un objeto experimenta un MAS si está sujeto a una fuerza restauradora lineal, descrita por la <strong>Ley de Hooke</strong>: $F = -kx$. Aquí, $k$ es la constante del resorte y $x$ es el desplazamiento desde la posición de equilibrio. El signo negativo indica que la fuerza siempre se opone al desplazamiento.</p>
+      <p>La ecuación diferencial del movimiento es $m\ddot{x} + kx = 0$. Su solución general es una función sinusoidal:</p>
+      <p style="text-align: center; font-size: 1.1rem;">$x(t) = A \cos(\omega t + \varphi)$</p>
+      <p>Donde:</p>
+      <ul>
+        <li>$A$: <strong>Amplitud</strong>, el máximo desplazamiento desde el equilibrio.</li>
+        <li>$\omega$: <strong>Frecuencia angular</strong>, relacionada con el período $T$ por $\omega = 2\pi/T = \sqrt{k/m}$.</li>
+        <li>$\varphi$: <strong>Ángulo de fase inicial</strong>, que determina la posición de la partícula en $t=0$.</li>
+      </ul>
+
+      <h3>Energía en el MAS</h3>
+      <p>La energía del sistema se conserva y se transforma continuamente entre dos formas:</p>
+      <ul>
+        <li><strong>Energía Cinética ($E_k$):</strong> La energía debida al movimiento, $E_k = \frac{1}{2}mv^2$. Es máxima en el punto de equilibrio ($x=0$) y nula en los extremos ($x=\pm A$).</li>
+        <li><strong>Energía Potencial Elástica ($U_k$):</strong> La energía almacenada en el resorte, $U_k = \frac{1}{2}kx^2$. Es máxima en los extremos y nula en el equilibrio.</li>
+      </ul>
+      <p>La <strong>Energía Mecánica Total ($E$)</strong> es la suma de ambas y permanece constante: $E = E_k + U_k = \frac{1}{2}kA^2$.</p>
+
+      <h3>Uso del Simulador</h3>
+      <h4>1. Visor Principal (Gráfico de Energía)</h4>
+      <ul>
+        <li>La <strong>curva azul</strong> representa el "pozo" de energía potencial $U(x)$. La partícula no puede tener más energía potencial que la total, por lo que su movimiento está confinado dentro de este pozo.</li>
+        <li>La <strong>línea amarilla horizontal</strong> indica la energía total constante del sistema, $E$.</li>
+        <li>La <strong>partícula naranja</strong> se mueve a lo largo del eje horizontal, mostrando su posición instantánea $x(t)$.</li>
+        <li>El <strong>vector rosa</strong> representa la fuerza restauradora $\vec{F}$. Apunta siempre hacia el centro (equilibrio) y su longitud es proporcional a la distancia al centro.</li>
+        <li>Los puntos donde la línea de energía total corta la parábola de energía potencial se llaman <strong>puntos de retorno</strong>. En estos puntos, toda la energía es potencial y la velocidad es cero.</li>
+      </ul>
+      <h4>2. Consola de Control</h4>
+      <ul>
+        <li><strong>Perillas:</strong> Ajusta los parámetros iniciales del sistema: Masa ($m$), Periodo ($T$), Amplitud ($A$) y Fase inicial ($\varphi$).
+          <ul>
+            <li><strong>Arrastrar:</strong> Haz clic y arrastra el puntero de la perilla.</li>
+            <li><strong>Rueda del ratón:</strong> Coloca el cursor sobre la perilla y usa la rueda. Mantén <code>Shift</code> para un ajuste fino.</li>
+            <li><strong>Teclado:</strong> Selecciona la perilla (con Tab o clic) y usa las flechas. Mantén <code>Shift</code> para un ajuste fino.</li>
+            <li><strong>Doble Clic:</strong> Restaura el valor por defecto de la perilla.</li>
+          </ul>
+        </li>
+        <li><strong>Botones de Simulación:</strong> Controlan la ejecución (Iniciar, Pausar, Resetear, etc.).</li>
+      </ul>
+      <h4>3. Monitores y Registradores</h4>
+      <ul>
+        <li><strong>Monitor de Energía:</strong> Las barras muestran la distribución instantánea de energía cinética, potencial y total.</li>
+        <li><strong>Telemetría:</strong> Muestra los valores numéricos instantáneos de posición, velocidad, fuerza y constante $k$.</li>
+        <li><strong>Registrador Gráfico:</strong> Grafica las energías en función del tiempo, permitiendo observar su comportamiento sinusoidal.</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    const TAU=Math.PI*2, $=q=>document.querySelector(q), fmt=(x,n=2)=>Number(x).toFixed(n);
+    const S={m:0.85,T:2,A:3.5,phi:0,t:0,run:false};
+    // Objeto para almacenar los estilos de la curva
+    const curveStyle = {
+        color: getComputedStyle(document.documentElement).getPropertyValue('--pot').trim(),
+        width: 3,
+        dash: 'solid'
+    };
+    const el={
+      scene:$('#scene'), Etxt:$('#Etxt'), led:$('#led'), ledTxt:$('#ledTxt'),
+      barEk:$('#barEk'), barUk:$('#barUk'), barE:$('#barE'), 
+      vEk:$('#vEk'), vUk:$('#vUk'), vE:$('#vE'),
+      vx:$('#vx'), vv:$('#vv'), vF:$('#vF'), vk:$('#vk'),
+      play:$('#play'), pause:$('#pause'), reset:$('#reset'), clear:$('#clear'), step:$('#step'), estop:$('#estop'),
+      plot:$('#plot'), modal:$('#modal'), helpBtn:$('#helpBtn'),
+      styleToggle: $('#style-toggle'), stylePanel: $('#style-panel'),
+      curveColor: $('#curveColor'), curveWidth: $('#curveWidth'), curveStyle: $('#curveStyle')
+    };
+    /* ---------- Canvas ---------- */
+    const ctx=el.scene.getContext('2d');
+    function resizeScene(){
+      const r=el.scene.parentElement.getBoundingClientRect();
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      const w=Math.floor(r.width*dpr), h=Math.floor(r.height*dpr);
+      if(el.scene.width!==w||el.scene.height!==h){ el.scene.width=w; el.scene.height=h; ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+    }
+    new ResizeObserver(()=>requestAnimationFrame(resizeScene)).observe(el.scene.parentElement);
+    function params(){ const w=TAU/S.T, k=S.m*w*w, E=0.5*k*S.A*S.A; return {w,k,E}; }
+    function draw(){
+      const {w,k,E}=params(); const W=el.scene.clientWidth, H=el.scene.clientHeight; ctx.clearRect(0,0,W,H);
+      
+      const margin = { top: 30, right: 60, bottom: 50, left: 60 };
+      const chartW = W - margin.left - margin.right;
+      const chartH = H - margin.top - margin.bottom;
+      const xMax = Math.max(1.1 * S.A, 1.5);
+      const UMax = Math.max(E * 1.15, 1);
+      const sx = x => margin.left + (x + xMax) / (2 * xMax) * chartW;
+      const sU = U => margin.top + chartH - (U / UMax) * chartH;
+
+      ctx.strokeStyle = 'rgba(34,211,238,.14)'; ctx.lineWidth = 1;
+      for(let x=0; x < W; x+=20){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for(let y=0; y < H; y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+      ctx.strokeStyle = 'rgba(234, 242, 255, 0.7)'; ctx.fillStyle = 'rgba(234, 242, 255, 0.9)';
+      ctx.lineWidth = 1.5; ctx.font = '10px "Roboto Mono"';
+      ctx.beginPath(); ctx.moveTo(margin.left, margin.top + chartH); ctx.lineTo(margin.left + chartW, margin.top + chartH); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(margin.left, margin.top); ctx.lineTo(margin.left, margin.top + chartH); ctx.stroke();
+      
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const xTickStep = Math.ceil(xMax / 5);
+      for (let i = -Math.floor(xMax/xTickStep) * xTickStep; i <= Math.floor(xMax/xTickStep) * xTickStep; i += xTickStep) {
+          if (i === 0) continue;
+          const xPos = sx(i);
+          ctx.beginPath(); ctx.moveTo(xPos, margin.top + chartH); ctx.lineTo(xPos, margin.top + chartH + 5); ctx.stroke();
+          ctx.fillText(i.toFixed(0), xPos, margin.top + chartH + 8);
+      }
+      ctx.fillText('0', sx(0), margin.top + chartH + 8);
+      ctx.font = '12px "Inter"'; ctx.fillText('Posición (m)', margin.left + chartW / 2, H - 15);
+
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      const yTickStep = UMax / 5;
+      for (let i = yTickStep; i <= UMax; i += yTickStep) {
+          const yPos = sU(i);
+          ctx.beginPath(); ctx.moveTo(margin.left, yPos); ctx.lineTo(margin.left - 5, yPos); ctx.stroke();
+          ctx.fillText(i.toFixed(0), margin.left - 8, yPos);
+      }
+      ctx.save();
+      ctx.translate(20, margin.top + chartH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.font = '12px "Inter"';
+      ctx.fillText('Energía (J)', 0, 0);
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(234, 242, 255, 0.9)';
+      ctx.font = '11px "Roboto Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText('-A', sx(-S.A), margin.top + chartH + 22);
+      ctx.fillText('+A', sx(S.A), margin.top + chartH + 22);
+
+      // --- Curva de energía potencial con estilos dinámicos ---
+      ctx.strokeStyle = curveStyle.color;
+      ctx.lineWidth = curveStyle.width;
+      ctx.shadowColor = curveStyle.color;
+      ctx.shadowBlur = 8;
+      if (curveStyle.dash === 'dashed') { ctx.setLineDash([8, 6]); }
+      else if (curveStyle.dash === 'dotted') { ctx.setLineDash([2, 4]); }
+      else { ctx.setLineDash([]); }
+      ctx.beginPath();
+      for(let xv=-xMax; xv<=xMax; xv+=(2*xMax)/240){ const X=sx(xv), Y=sU(0.5*k*xv*xv); if(xv===-xMax) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);}
+      ctx.stroke();
+      ctx.setLineDash([]); ctx.shadowBlur = 0;
+      
+      ctx.setLineDash([8,6]); ctx.strokeStyle=getVar('--tot'); ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(margin.left, sU(E)); ctx.lineTo(margin.left + chartW, sU(E)); ctx.stroke();
+      ctx.setLineDash([]); el.Etxt.textContent=`E = ${fmt(E)} J`;
+      
+      const x=S.A*Math.cos(w*S.t+S.phi), v=-S.A*w*Math.sin(w*S.t+S.phi);
+      const Ek=0.5*S.m*v*v, Uk=0.5*k*x*x, Et=Ek+Uk, F=-k*x;
+      
+      const xPos = sx(x);
+      const yPos_U = sU(Uk);
+      const particleY = margin.top + chartH;
+      
+      // --- Líneas de Proyección ---
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      // Línea vertical desde la partícula a la curva
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); ctx.moveTo(xPos, particleY); ctx.lineTo(xPos, yPos_U); ctx.stroke();
+      // Línea horizontal desde el eje Y a la curva (RESTAURADA)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.beginPath(); ctx.moveTo(margin.left, yPos_U); ctx.lineTo(xPos, yPos_U); ctx.stroke();
+      
+      ctx.fillStyle = curveStyle.color;
+      ctx.setLineDash([]); // Reset dash for the marker
+      ctx.beginPath(); ctx.arc(xPos, yPos_U, 5, 0, TAU); ctx.fill();
+
+      // --- Barras de energía y línea de conexión ---
+      const barX = sx(S.A) + 30;
+      // Línea punteada desde la curva a las barras de energía
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.beginPath(); ctx.moveTo(xPos, yPos_U); ctx.lineTo(barX, yPos_U); ctx.stroke();
+      ctx.setLineDash([]);
+
+      const yPos_E_fixed = sU(Et);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = getVar('--kin');
+      ctx.beginPath(); ctx.moveTo(barX, yPos_U); ctx.lineTo(barX, yPos_E_fixed); ctx.stroke();
+      ctx.strokeStyle = curveStyle.color;
+      ctx.beginPath(); ctx.moveTo(barX, particleY); ctx.lineTo(barX, yPos_U); ctx.stroke();
+      ctx.font = '11px "Roboto Mono"';
+      ctx.fillStyle = getVar('--kin');
+      ctx.fillText(`${fmt(Ek,1)}J`, barX + 12, yPos_E_fixed + (yPos_U - yPos_E_fixed)/2);
+      ctx.fillStyle = curveStyle.color;
+      ctx.fillText(`${fmt(Uk,1)}J`, barX + 12, yPos_U + (particleY - yPos_U)/2);
+
+      // Partícula
+      ctx.fillStyle=getVar('--orange'); ctx.strokeStyle='#eaf2ff'; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.arc(xPos, particleY, 7.5, 0, TAU); ctx.fill(); ctx.stroke();
+      
+      // --- Vector de fuerza (corregido) ---
+      const dir = -Math.sign(x) || -1; // Siempre apunta al centro (x=0)
+      const L=Math.min(chartW/4, Math.abs(F/UMax) * chartW * 0.2);
+      const x0=xPos;
+      const y0=particleY;
+      const x1=x0+(dir*L);
+      ctx.strokeStyle=getVar('--force'); ctx.fillStyle=getVar('--force'); ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1,y0); ctx.lineTo(x1-8*dir,y0-5); ctx.lineTo(x1-8*dir,y0+5); ctx.closePath(); ctx.fill();
+      
+      const refE = Math.max(Et, 1e-9);
+      el.barEk.style.width = `${(Ek / refE) * 100}%`;
+      el.barUk.style.width = `${(Uk / refE) * 100}%`;
+      el.barE.style.width = `${(Et / refE) * 100}%`;
+
+      el.vEk.textContent=`${fmt(Ek)} J`; el.vUk.textContent=`${fmt(Uk)} J`; el.vE.textContent=`${fmt(Et)} J`; 
+      el.vx.textContent=`${fmt(x)} m`; el.vv.textContent=`${fmt(v)} m/s`; el.vF.textContent=`${fmt(F)} N`; el.vk.textContent=`${fmt(k)} N/m`;
+      
+      plot.maybePush(S.t,Ek,Uk,Et);
+    }
+    /* ---------- Plotly (muestreo estable) ---------- */
+    const plot={ready:false,lastT:-Infinity,step:1/120,t:[],ek:[],uk:[],et:[],
+      init(){this.t=[];this.ek=[];this.uk=[];this.et=[];this.lastT=-Infinity; Plotly.newPlot(el.plot,[
+          {type:'scattergl',x:this.t,y:this.ek,name:'Ec',mode:'lines',line:{width:2.6,color:getVar('--kin')}},
+          {type:'scattergl',x:this.t,y:this.uk,name:'Uk',mode:'lines',line:{width:2.6,color:getVar('--pot')}},
+          {type:'scattergl',x:this.t,y:this.et,name:'E', mode:'lines',line:{width:3.0,color:getVar('--tot')}}
+        ],{paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',margin:{l:56,r:20,t:10,b:40},
+          xaxis:{title:'t (s)',color:'#9fb0cc',gridcolor:'#24365e'},yaxis:{title:'Energía (J)',color:'#9fb0cc',gridcolor:'#24365e'},
+          legend:{orientation:'h',x:0,y:1.12,font:{color:'#eaf2ff'}},uirevision:'const'}, {displaylogo:false,responsive:true}); this.ready=true;},
+      clear(){this.t.length=this.ek.length=this.uk.length=this.et.length=0; Plotly.update(el.plot,{x:[[],[],[]],y:[[],[],[]]});},
+      maybePush(t,Ek,Uk,Et){ if(!this.ready) return; if(this.lastT===-Infinity) this.lastT=t; if(t-this.lastT<this.step) return; this.lastT=t; this.t.push(t); this.ek.push(Ek); this.uk.push(Uk); this.et.push(Et); if(this.t.length>3000){this.t.shift();this.ek.shift();this.uk.shift();this.et.shift();} Plotly.update(el.plot,{x:[this.t,this.t,this.t],y:[this.ek,this.uk,this.et]}); }
+    };
+    /* ---------- Loop ---------- */
+    let RAF=null,last=null; function loop(ts){ if(last==null) last=ts; const dt=(ts-last)/1000; last=ts; if(S.run) S.t+=dt; draw(); RAF=requestAnimationFrame(loop); }
+    /* ---------- Knobs universales ---------- */
+    document.querySelectorAll('.knob').forEach(knob=>{
+      const pointer=knob.querySelector('.pointer'), tip=knob.querySelector('.tooltip'); const out=document.getElementById(knob.dataset.param+'Out');
+      const min=+knob.dataset.min, max=+knob.dataset.max, step=+knob.dataset.step; const clamp=v=>Math.min(max,Math.max(min,v));
+      const round=v=>Math.round(v/step)*step; const val2ang=v=> -135+((v-min)/(max-min))*270; const ang2val=a=> clamp(round(min+((a+135)/270)*(max-min)));
+      let value=+knob.dataset.value; const def=value; 
+      function render(){ 
+        const ang=val2ang(value); 
+        pointer.style.transform=`translateX(-50%) rotate(${ang}deg)`; 
+        tip.textContent=(knob.dataset.param==='phi'? value.toFixed(0)+'°' : value.toFixed(2)); 
+        knob.setAttribute('aria-valuemin',min); knob.setAttribute('aria-valuemax',max); knob.setAttribute('aria-valuenow',value); 
+        if(out) out.textContent=(knob.dataset.param==='phi'? value.toFixed(0): value.toFixed(2)); 
+        knob.dataset.value=value; 
+        knob.dispatchEvent(new CustomEvent('knobchange',{detail:{param:knob.dataset.param,value}})); 
+      }
+      function setFromPointer(x,y){ 
+        const r=knob.getBoundingClientRect(); 
+        const cx=r.left+r.width/2, cy=r.top+r.height/2; 
+        const a=Math.atan2(y-cy,x-cx)*180/Math.PI; 
+        let deg=a+90;
+        let normalizedDeg = (deg + 360) % 360;
+        if (normalizedDeg > 135 && normalizedDeg < 225) {
+            if (Math.abs(normalizedDeg - 135) < Math.abs(normalizedDeg - 225)) { deg = 135; } else { deg = -135; }
+        } else if (normalizedDeg >= 225) { deg = normalizedDeg - 360; } else { deg = normalizedDeg; }
+        value=ang2val(deg); render(); 
+      }
+      let dragging=false; 
+      knob.addEventListener('pointerdown',e=>{ dragging=true; knob.classList.add('dragging'); knob.setPointerCapture?.(e.pointerId); setFromPointer(e.clientX,e.clientY); });
+      window.addEventListener('pointermove',e=>{if(dragging) setFromPointer(e.clientX,e.clientY)}); 
+      window.addEventListener('pointerup',()=>{dragging=false;knob.classList.remove('dragging')});
+      knob.addEventListener('wheel',e=>{e.preventDefault(); const mult=e.shiftKey?0.1:1; value=clamp(round(value + (e.deltaY<0?1:-1)*step*mult)); render();},{passive:false});
+      knob.addEventListener('keydown',e=>{ if(['ArrowUp','ArrowRight','ArrowDown','ArrowLeft','Home','End'].includes(e.key)){ e.preventDefault(); const fine=e.shiftKey?0.1:1; if(e.key==='Home') value=min; else if(e.key==='End') value=max; else { const s=(e.key==='ArrowUp'||e.key==='ArrowRight')?1:-1; value=clamp(round(value+s*step*fine)); } render(); }});
+      knob.addEventListener('dblclick',()=>{ value=def; render(); });
+      render();
+      knob.addEventListener('knobchange',e=>{ const {param,value}=e.detail; if(param==='phi') S.phi=value*Math.PI/180; else S[param]=value; if(!S.run){ plot.init(); draw(); }});
+    });
+    /* ---------- Botones ---------- */
+    el.play.addEventListener('click',()=>{ if(!S.run){S.run=true; el.led.classList.remove('off'); el.led.classList.add('on'); el.ledTxt.textContent='RUN'; }});
+    el.pause.addEventListener('click',()=>{ S.run=false; el.led.classList.add('off'); el.led.classList.remove('on'); el.ledTxt.textContent='STOP'; });
+    el.reset.addEventListener('click',()=>{ S.run=false; S.t=0; plot.init(); draw(); el.led.classList.add('off'); el.led.classList.remove('on'); el.ledTxt.textContent='STOP'; });
+    el.clear.addEventListener('click',()=> plot.clear());
+    el.estop.addEventListener('click',()=>{ S.run=false; cancelAnimationFrame(RAF); el.led.classList.add('off'); el.led.classList.remove('on'); el.ledTxt.textContent='STOP'; });
+    el.step.addEventListener('click',()=>{ if(!S.run) { S.t+=0.02; draw(); } });
+    /* ---------- Modal Ayuda ---------- */
+    el.helpBtn.addEventListener('click',()=> el.modal.classList.add('open'));
+    el.modal.querySelector('.bk').addEventListener('click',()=> el.modal.classList.remove('open'));
+    el.modal.querySelector('.closex').addEventListener('click',()=> el.modal.classList.remove('open'));
+    /* ---------- Controles de Estilo ---------- */
+    el.styleToggle.addEventListener('click', () => el.stylePanel.classList.toggle('open'));
+    el.curveColor.addEventListener('input', (e) => { curveStyle.color = e.target.value; if(!S.run) draw(); });
+    el.curveWidth.addEventListener('input', (e) => { curveStyle.width = e.target.value; if(!S.run) draw(); });
+    el.curveStyle.addEventListener('change', (e) => { curveStyle.dash = e.target.value; if(!S.run) draw(); });
+    function initStyleControls() {
+        el.curveColor.value = curveStyle.color;
+        el.curveWidth.value = curveStyle.width;
+        el.curveStyle.value = curveStyle.dash;
+    }
+    /* ---------- Util ---------- */
+    function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+    /* ---------- Inicio ---------- */
+    initStyleControls();
+    resizeScene(); 
+    plot.init(); 
+    draw(); 
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
