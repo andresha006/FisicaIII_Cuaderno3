@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Elongación - Interfaz Cyber</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* CYBERPUNK / HUD THEME */
+            --bg-dark: #050505;
+            --bg-grid: rgba(0, 255, 170, 0.03);
+            --neon-green: #00ffaa;
+            --neon-pink: #ff0055;
+            --neon-blue: #00eeff;
+            --neon-yellow: #ffee00;
+            --hud-border: rgba(0, 238, 255, 0.2);
+            --hud-bg: rgba(5, 10, 15, 0.85);
+
+            --font-hdr: 'Orbitron', sans-serif;
+            --font-sys: 'Rajdhani', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--neon-blue);
+            font-family: var(--font-sys);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* DIGITAL CRT/SCANLINE EFFECT */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .scanline {
+            width: 100%;
+            height: 10px;
+            z-index: 3;
+            position: absolute;
+            pointer-events: none;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 238, 255, 0.2) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                top: -10%;
+            }
+
+            100% {
+                top: 110%;
+            }
+        }
+
+        /* HEX GRID BACKGROUND */
+        .bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(var(--bg-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            opacity: 0.5;
+            perspective: 500px;
+            transform: rotateX(60deg) scale(2.5) translateY(-20%);
+            transform-origin: top;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        /* HEADER */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-blue);
+            background: linear-gradient(to bottom, rgba(0, 238, 255, 0.1), transparent);
+            box-shadow: 0 5px 25px rgba(0, 238, 255, 0.1);
+        }
+
+        .sys-title {
+            font-family: var(--font-hdr);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--neon-blue);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sys-title span {
+            font-size: 0.7rem;
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            padding: 3px 8px;
+            border-radius: 2px;
+            letter-spacing: 1px;
+            font-weight: 900;
+        }
+
+        /* HUD MAIN LAYOUT */
+        main {
+            flex: 1;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        /* TOP METRICS */
+        .metrics-top {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+        }
+
+        .metric-box {
+            background: var(--hud-bg);
+            border: 1px solid var(--hud-border);
+            padding: 10px 20px;
+            min-width: 180px;
+            position: relative;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .metric-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--neon-current, var(--neon-blue));
+            box-shadow: 0 0 10px var(--neon-current, var(--neon-blue));
+        }
+
+        .m-title {
+            font-family: var(--font-hdr);
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+        }
+
+        .m-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--neon-current, var(--neon-blue));
+            text-shadow: 0 0 8px var(--neon-current, var(--neon-blue));
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .m-val span {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* CANVAS AREA */
+        .hud-canvas {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--hud-border);
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0, 238, 255, 0.05);
+        }
+
+        .hud-canvas::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border: 1px solid var(--neon-blue);
+            clip-path: polygon(0 0, 20px 0, 0 20px, 0 0, 100% 0, 100% 20px, calc(100% - 20px) 0, 100% 0, 100% 100%, calc(100% - 20px) 100%, 100% calc(100% - 20px), 100% 100%, 0 100%, 0 calc(100% - 20px), 20px 100%, 0 100%);
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* CONTROLS AREA */
+        .controls-hud {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            background: var(--hud-bg);
+            border-top: 2px solid var(--hud-border);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .cyber-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .cyber-slider label {
+            font-family: var(--font-hdr);
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cyber-slider label output {
+            color: var(--neon-active, var(--neon-blue));
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 8px;
+            background: var(--neon-active, var(--neon-blue));
+            margin-top: -8px;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-active, var(--neon-blue));
+            clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 80%);
+        }
+
+        .btn-cyber {
+            font-family: var(--font-hdr);
+            background: rgba(0, 238, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .btn-cyber:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+    <div class="scanline"></div>
+
+    <header>
+        <div class="sys-title">
+            <i class="fa-solid fa-satellite-dish"></i>
+            Órbita Cuántica HUD
+            <span>v1.0.4</span>
+        </div>
+        <div style="font-size: 0.8rem; letter-spacing: 2px;">SYS.OP // CINETICA ARMÓNICA 1D</div>
+    </header>
+
+    <main>
+        <div class="metrics-top">
+            <div class="metric-box" style="--neon-current: var(--neon-green);">
+                <div class="m-title">AMPLITUD MÁXIMA [A]</div>
+                <div class="m-val" id="hudA">100 <span>UNITS</span></div>
+            </div>
+            <div class="metric-box" style="--neon-current: var(--neon-pink);">
+                <div class="m-title">ELONGACIÓN ACTUAL [x]</div>
+                <div class="m-val" id="hudX">0.00 <span>UNITS</span></div>
+            </div>
+            <div class="metric-box" style="--neon-current: var(--neon-yellow);">
+                <div class="m-title">FASE DEL SISTEMA [T]</div>
+                <div class="m-val" id="hudT">0.00 <span>SEC</span></div>
+            </div>
+        </div>
+
+        <div class="hud-canvas" id="canvasWrap">
+            <canvas id="cyberCanvas"></canvas>
+        </div>
+
+        <div class="controls-hud">
+            <div class="cyber-slider" style="--neon-active: var(--neon-green);">
+                <label>RANGO DE AMPLITUD <output id="outA">100</output></label>
+                <input type="range" id="sliderA" min="50" max="300" step="10" value="150">
+            </div>
+            <div class="cyber-slider" style="--neon-active: var(--neon-yellow);">
+                <label>FRECUENCIA DE OSCILACIÓN <output id="outW">1.0</output></label>
+                <input type="range" id="sliderW" min="0.1" max="5.0" step="0.1" value="1.0">
+            </div>
+            <div>
+                <button class="btn-cyber" id="btnSysPower">
+                    <i class="fa-solid fa-power-off"></i> INICIALIZAR SISTEMA
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('cyberCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrap = document.getElementById('canvasWrap');
+
+        // HUD Elements
+        const hudA = document.getElementById('hudA');
+        const hudX = document.getElementById('hudX');
+        const hudT = document.getElementById('hudT');
+
+        // Controls
+        const sliderA = document.getElementById('sliderA');
+        const sliderW = document.getElementById('sliderW');
+        const outA = document.getElementById('outA');
+        const outW = document.getElementById('outW');
+        const btnSysPower = document.getElementById('btnSysPower');
+
+        // State Physics
+        let A = 150;      // Amplitud base en Píxeles (equivale a unidades)
+        let omega = 1.0;  // Frecuencia Angular rad/s
+        let time = 0;
+        let isSimulating = false;
+        let lastTimestamp = 0;
+        let elongX = A;   // Elongación inicial en la amplitud maxima
+
+        // State Layout
+        let W, H, eqX, eqY;
+
+        function resize() {
+            W = canvas.width = wrap.clientWidth;
+            H = canvas.height = wrap.clientHeight;
+            eqX = W / 2; // Centro/Origen 'O'
+            eqY = H / 2; // Riel láser central
+        }
+        window.addEventListener('resize', resize);
+
+        // --- RENDER CYBERPUNK --- //
+
+        // Dibuja línea resplandeciente
+        function lineGlow(x1, y1, x2, y2, color, width, blur) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = blur;
+            ctx.stroke();
+            // Core blanco central
+            if (width > 2) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = width * 0.3;
+                ctx.shadowBlur = 0;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Trazar delimitación HUD estilo [ N ] o [ M ]
+        function drawHUDMarker(x, y, label, isTarget = false) {
+            const h = 40;
+            const w = 15;
+            const c = isTarget ? '#ff0055' : '#00ffaa'; // Pink or Green
+            ctx.save();
+
+            ctx.strokeStyle = c;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = c;
+            ctx.shadowBlur = 10;
+
+            // Bracket Izquierdo [
+            ctx.beginPath();
+            ctx.moveTo(x - w, y - h / 2);
+            ctx.lineTo(x - w, y + h / 2);
+            ctx.lineTo(x - w + 5, y + h / 2);
+            ctx.moveTo(x - w, y - h / 2);
+            ctx.lineTo(x - w + 5, y - h / 2);
+            ctx.stroke();
+
+            // Texto M O N
+            ctx.fillStyle = c;
+            ctx.font = '700 16px "Orbitron"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x, y - h - 15);
+
+            // Crosshair central miniatura
+            ctx.beginPath();
+            ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+            ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawAcotationLine(xStart, xEnd, yLevel, label, color) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 5;
+
+            // Linea central
+            ctx.beginPath();
+            ctx.moveTo(xStart, yLevel);
+            ctx.lineTo(xEnd, yLevel);
+            ctx.stroke();
+
+            // Terminales
+            ctx.beginPath();
+            ctx.moveTo(xStart, yLevel - 8); ctx.lineTo(xStart, yLevel + 8);
+            ctx.moveTo(xEnd, yLevel - 8); ctx.lineTo(xEnd, yLevel + 8);
+            ctx.stroke();
+
+            // Label
+            const mid = (xStart + xEnd) / 2;
+            // Background opaco para leer el label sobre la malla 
+            ctx.font = '500 11px "Orbitron"';
+            const tm = ctx.measureText(label);
+            ctx.fillStyle = '#050a0f';
+            ctx.fillRect(mid - tm.width / 2 - 5, yLevel - 20, tm.width + 10, 16);
+
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.fillText(label, mid, yLevel - 8);
+
+            ctx.restore();
+        }
+
+        function drawGridCyber() {
+            ctx.strokeStyle = 'rgba(0, 238, 255, 0.05)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // Radar circles
+            for (let r = 50; r < W; r += 50) {
+                ctx.moveTo(eqX + r, eqY);
+                ctx.arc(eqX, eqY, r, 0, Math.PI * 2);
+            }
+            ctx.stroke();
+
+            // Cross
+            ctx.beginPath();
+            ctx.moveTo(eqX, 0); ctx.lineTo(eqX, H);
+            ctx.stroke();
+        }
+
+        // --- MAIN LOOP --- //
+        function loop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            if (isSimulating) {
+                time += dt;
+                // Ecuación principal de la imagen: x(t) = A * cos(w*t)
+                // Se asume empuje desde un extremo (A).
+                elongX = Math.cos(omega * time) * A;
+            }
+
+            ctx.clearRect(0, 0, W, H);
+
+            drawGridCyber();
+
+            // 1. EL RIEL (Eje X)
+            lineGlow(0, eqY, W, eqY, '#00eeff', 3, 15);
+
+            // 2. ORÍGENES / MARCADORES
+            const pO = eqX;
+            const pM = eqX - A;
+            const pN = eqX + A;
+            const pP = eqX + elongX; // Posición de la partícula
+
+            drawHUDMarker(pM, eqY, "M (-A)");
+            drawHUDMarker(pO, eqY, "O (ZERO)");
+            drawHUDMarker(pN, eqY, "N (+A)");
+
+            // 3. LA MASA (ORBE HOLOGRÁFICO P)
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pP, eqY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 30;
+            ctx.fill();
+            // Anillo exterior rotando
+            ctx.beginPath();
+            ctx.arc(pP, eqY, 20 + Math.sin(timestamp / 200) * 3, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = '700 14px "Orbitron"';
+            ctx.textAlign = 'center';
+            ctx.fillText("P", pP, eqY - 35);
+            ctx.restore();
+
+            // 4. LÍNEAS DE ACOTACIÓN (Equivalente a las 'llaves' del libro viejo)
+            // ACOTACIÓN A (Amplitud Total Estática) - Debajo del riel
+            drawAcotationLine(pO, pN, eqY + 60, `AMPLITUD (+${A})`, '#00ffaa');
+            drawAcotationLine(pM, pO, eqY + 60, `AMPLITUD (-${A})`, '#00ffaa');
+
+            // ACOTACIÓN x(elongación) - Arriba del riel, es dinámica!
+            // Solo dibujamos si x > 1 (está lejos del origen) para evitar overlap feo
+            if (Math.abs(elongX) > 5) {
+                // Siempre traza desde 'O' hasta la partícula 'P'
+                drawAcotationLine(pO, pP, eqY - 60, `x (ELONGACIÓN)`, '#ff0055');
+            }
+
+            // Datos HUD en DOM (sincronizar pantalla con gráficos)
+            hudA.innerHTML = `${A.toFixed(0)} <span>UNITS</span>`;
+            hudX.innerHTML = `${elongX.toFixed(2)} <span>UNITS</span>`;
+            hudT.innerHTML = `${time.toFixed(2)} <span>SEC</span>`;
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- EVENTS ---
+
+        function updateVar() {
+            // Guardamos el ratio de X respecto a vieja A, para que no salte locamente al cambiar slider
+            const ratio = elongX / A;
+
+            A = parseFloat(sliderA.value);
+            omega = parseFloat(sliderW.value);
+
+            outA.innerText = A;
+            outW.innerText = omega;
+
+            if (!isSimulating) {
+                elongX = A * ratio; // Ajusta visual mientras está en pausa
+            }
+        }
+
+        sliderA.addEventListener('input', updateVar);
+        sliderW.addEventListener('input', updateVar);
+
+        btnSysPower.addEventListener('click', () => {
+            isSimulating = !isSimulating;
+            if (isSimulating) {
+                btnSysPower.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PAUSAR CINETICA';
+                btnSysPower.style.borderColor = '#ff0055';
+                btnSysPower.style.color = '#ff0055';
+            } else {
+                btnSysPower.innerHTML = '<i class="fa-solid fa-power-off"></i> INICIALIZAR SISTEMA';
+                btnSysPower.style.borderColor = '#00eeff';
+                btnSysPower.style.color = '#00eeff';
+            }
+        });
+
+        // INIT
+        resize();
+        updateVar();
+        elongX = A; // Inicia en +A, posición N
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>
