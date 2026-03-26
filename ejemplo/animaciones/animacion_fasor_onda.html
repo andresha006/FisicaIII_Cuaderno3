@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetría de Análisis Vectorial - Fasor vs Onda</title>
+
+    <!-- Premium Fonts for Scientific/Data-Viz Look -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Premium Dark Theme - Scientific Dashboard */
+            --bg-base: #0b0f19;
+            --surface-1: #111827;
+            --surface-2: #1f2937;
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-highlight: rgba(56, 189, 248, 0.2);
+
+            --circle-color: #38bdf8;
+            /* Light Blue */
+            --fasor-color: #ec4899;
+            /* Pink */
+            --velocity-color: #facc15;
+            /* Yellow */
+            --wave-color: #10b981;
+            /* Emerald */
+            --axis-color: rgba(148, 163, 184, 0.4);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --font-ui: 'Exo 2', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                radial-gradient(ellipse at top, rgba(17, 24, 39, 1) 0%, var(--bg-base) 100%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* HEADER */
+        header {
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-subtle);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            color: var(--circle-color);
+            font-size: 1.5rem;
+            text-shadow: 0 0 15px var(--circle-color);
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-rows: 1fr auto;
+            position: relative;
+        }
+
+        /* CANVAS AREA */
+        .workspace {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            /* Subtle interior shadow for depth */
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        /* OVERLAY TELEMETRY (floating data) */
+        .telemetry-overlay {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            pointer-events: none;
+        }
+
+        .data-card {
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--highlight-color, var(--circle-color));
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            min-width: 220px;
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-value {
+            font-family: var(--font-mono);
+            font-size: 1.6rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: bottom;
+        }
+
+        .data-unit {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+            align-self: flex-end;
+            margin-bottom: 0.2rem;
+        }
+
+        /* BOTTOM CONTROL DASHBOARD */
+        .dashboard {
+            background: var(--surface-1);
+            border-top: 1px solid var(--border-subtle);
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4rem;
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 300px;
+        }
+
+        .ctrl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ctrl-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ctrl-title i {
+            color: var(--ctrl-accent, var(--text-secondary));
+        }
+
+        .ctrl-val-display {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background: var(--surface-2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* PREMIUM SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: var(--surface-2);
+            border-radius: 3px;
+            border: 1px solid rgba(0, 0, 0, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--ctrl-accent, #fff);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px var(--ctrl-accent, transparent), 0 2px 5px rgba(0, 0, 0, 0.5);
+            border: 2px solid #fff;
+            transition: transform 0.1s;
+        }
+
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+        }
+
+        /* BUTTONS */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--surface-2);
+            border-color: var(--text-secondary);
+        }
+
+        .btn.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--wave-color);
+            color: var(--wave-color);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn.active i {
+            color: var(--wave-color);
+        }
+
+        @media (max-width: 900px) {
+            .dashboard {
+                flex-wrap: wrap;
+                gap: 2rem;
+                padding: 1.5rem;
+            }
+
+            .telemetry-overlay {
+                display: none;
+                /* Hide on small screens to save space */
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo-area">
+            <i class="fa-solid fa-satellite-dish logo-icon"></i>
+            <div>
+                <h1>Laboratorio Vectorial F3</h1>
+                <div class="subtitle">Movimiento Circular Uniforme a M.A.S</div>
+            </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);">
+            <i class="fa-solid fa-circle-check" style="color: var(--wave-color); margin-right: 5px;"></i> Sistema
+            Estable
+        </div>
+    </header>
+
+    <main>
+        <div class="workspace" id="workspace">
+            <canvas id="mainCanvas"></canvas>
+
+            <div class="telemetry-overlay">
+                <div class="data-card" style="--highlight-color: var(--circle-color);">
+                    <div class="data-label">Ángulo (θ)</div>
+                    <div class="data-value" id="valTheta">0.00 <span class="data-unit">RAD</span></div>
+                </div>
+                <div class="data-card" style="--highlight-color: var(--fasor-color);">
+                    <div class="data-label">Desplazamiento (y)</div>
+                    <div class="data-value" id="valY">0.00 <span class="data-unit">METERS</span></div>
+                </div>
+                <div class="data-card" style="--highlight-color: var(--wave-color);">
+                    <div class="data-label">Tiempo (t)</div>
+                    <div class="data-value" id="valT">0.00 <span class="data-unit">SEC</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <button class="btn active" id="btnPlayPause">
+                <i class="fa-solid fa-pause"></i> <span>Pausar</span>
+            </button>
+
+            <div class="control-group" style="--ctrl-accent: var(--velocity-color);">
+                <div class="ctrl-header">
+                    <div class="ctrl-title"><i class="fa-solid fa-gauge-high"></i> Frec. Angular (ω)</div>
+                    <div class="ctrl-val-display" id="outW">1.00 rad/s</div>
+                </div>
+                <input type="range" id="sliderW" min="0.1" max="5.0" step="0.05" value="1.0">
+            </div>
+
+            <div class="control-group" style="--ctrl-accent: var(--fasor-color);">
+                <div class="ctrl-header">
+                    <div class="ctrl-title"><i class="fa-solid fa-rotate-right"></i> Fase Inicial (φ)</div>
+                    <div class="ctrl-val-display" id="outPhi">0°</div>
+                </div>
+                <input type="range" id="sliderPhi" min="0" max="360" step="1" value="0">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const workspace = document.getElementById('workspace');
+
+        // UI Elements
+        const outW = document.getElementById('outW');
+        const outPhi = document.getElementById('outPhi');
+        const sliderW = document.getElementById('sliderW');
+        const sliderPhi = document.getElementById('sliderPhi');
+        const btnPlayPause = document.getElementById('btnPlayPause');
+
+        const valTheta = document.getElementById('valTheta');
+        const valY = document.getElementById('valY');
+        const valT = document.getElementById('valT');
+
+        // State Physics
+        let time = 0;
+        let isPlaying = true;
+        let lastTimestamp = 0;
+
+        let omega = 1.0;          // Angular velocity (rad/s)
+        let phi = 0;              // Initial phase (rad)
+        let A = 150;              // Amplitude (radius of circle)
+
+        let history = [];         // Oscilloscope trace points
+        const maxHistory = 600;   // Max points to keep
+        const dx = 2;             // Pixels per history step
+
+        // Layout State
+        let W, H;
+        let circleCX, circleCY;
+        let waveStartX;
+
+        function resize() {
+            W = canvas.width = workspace.clientWidth;
+            H = canvas.height = workspace.clientHeight;
+
+            circleCX = W * 0.25;  // 25% from left
+            circleCY = H / 2;     // Vertical center
+
+            waveStartX = W * 0.5; // Wave starts exactly halfway across screen
+            A = Math.min(W * 0.15, H * 0.3); // Responsive radius
+        }
+        window.addEventListener('resize', resize);
+
+        // Utility: Draw Arrow
+        function drawArrow(fromX, fromY, toX, toY, color, width) {
+            const headlen = 10; // length of head in pixels
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const angle = Math.atan2(dy, dx);
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.lineTo(toX, toY);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawDashedLine(x1, y1, x2, y2, color) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // --- RENDER LOOP ---
+        function loop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            if (isPlaying) {
+                time += dt;
+            }
+
+            // Physics Math
+            const currentTheta = omega * time + phi;
+            // Canvas Y goes down, so we normally do: y = cy - A*sin(theta) to make standard math
+            const circlePx = circleCX + A * Math.cos(currentTheta);
+            const circlePy = circleCY - A * Math.sin(currentTheta);
+
+            // Record history if playing
+            if (isPlaying) {
+                history.unshift({ y: circlePy, t: time });
+                if (history.length > maxHistory) {
+                    history.pop();
+                }
+            } else if (history.length > 0) {
+                // If paused but we change phase via slider, update the head of the wave
+                // Actually, just let the wave be static when paused, but the horizontal line must connect to nothing or the current projection.
+            }
+
+            // CLEAR
+            ctx.clearRect(0, 0, W, H);
+
+            // --- DRAW BACKGROUND AXES ---
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+
+            // Horizontal reference line (y=0)
+            ctx.beginPath();
+            ctx.moveTo(0, circleCY);
+            ctx.lineTo(W, circleCY);
+            ctx.stroke();
+
+            // Vertical reference for circle
+            ctx.beginPath();
+            ctx.moveTo(circleCX, circleCY - A - 40);
+            ctx.lineTo(circleCX, circleCY + A + 40);
+            ctx.stroke();
+
+            // Vertical reference for wave start
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; // Emerald tint
+            ctx.beginPath();
+            ctx.moveTo(waveStartX, circleCY - A - 40);
+            ctx.lineTo(waveStartX, circleCY + A + 40);
+            ctx.stroke();
+
+            // --- DRAW CIRCLE (LEFT) ---
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(circleCX, circleCY, A, 0, Math.PI * 2);
+            ctx.strokeStyle = '#38bdf8'; // circle-color
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.restore();
+
+            // --- DRAW VECTORS ---
+            // Phasor (Position Vector)
+            drawArrow(circleCX, circleCY, circlePx, circlePy, '#ec4899', 2); // fasor-color
+
+            // Velocity Vector (tangent)
+            // vX = -A * omega * sin(theta) -> standard math
+            // vY = A * omega * cos(theta)
+            // On canvas:
+            const vX = -A * Math.sin(currentTheta);
+            const vY = -A * Math.cos(currentTheta); // Minus because Y goes down
+            // Normalize visual length a bit according to omega
+            const visLen = 60 + (omega * 5);
+            const mag = Math.sqrt(vX * vX + vY * vY);
+            const normVx = (vX / mag) * visLen;
+            const normVy = (vY / mag) * visLen;
+            drawArrow(circlePx, circlePy, circlePx + normVx, circlePy + normVy, '#facc15', 2); // velocity-color
+
+            // Projection points and connecting dashed line
+            drawDashedLine(circlePx, circlePy, waveStartX, circlePy, '#38bdf8');
+
+            // Dot on the circle
+            ctx.beginPath();
+            ctx.arc(circlePx, circlePy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+
+            // --- DRAW WAVE (RIGHT) ---
+            if (history.length > 0) {
+                ctx.save();
+                ctx.beginPath();
+                // For a true oscilloscope, the current Y is at waveStartX, older Ys move to the right.
+                // Or if we want it to look like the static image: the oldest points are further right.
+                // Yes, x_draw = waveStartX + index * dx
+                ctx.moveTo(waveStartX, circlePy);
+
+                for (let i = 0; i < history.length; i++) {
+                    const hx = waveStartX + (i * dx);
+                    if (hx > W) break; // Don't draw offscreen
+                    ctx.lineTo(hx, history[i].y);
+                }
+
+                ctx.strokeStyle = '#10b981'; // wave-color
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#10b981';
+                ctx.shadowBlur = 12;
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+
+                // Draw dot at the leading edge of the wave
+                ctx.beginPath();
+                ctx.arc(waveStartX, circlePy, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#10b981';
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // --- UPDATE TELEMETRY UI ---
+            // Normalize theta for display (0 to 2PI)
+            let displayTheta = currentTheta % (Math.PI * 2);
+            if (displayTheta < 0) displayTheta += Math.PI * 2;
+
+            valTheta.innerHTML = `${displayTheta.toFixed(2)} <span class="data-unit">RAD</span>`;
+            // Math Y (distance from center, standard orientation)
+            let mathY = (circleCY - circlePy) / (A / 100); // Scale 0-100 units
+            valY.innerHTML = `${mathY.toFixed(1)} <span class="data-unit">UNITS</span>`;
+            valT.innerHTML = `${time.toFixed(2)} <span class="data-unit">SEC</span>`;
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- CONTROLS LOGIC ---
+        function updateFromUI() {
+            omega = parseFloat(sliderW.value);
+            outW.innerText = omega.toFixed(2) + ' rad/s';
+
+            const deg = parseInt(sliderPhi.value);
+            outPhi.innerText = deg + '°';
+            phi = deg * (Math.PI / 180); // Convert to radians
+
+            // If paused and we change phase, we want to see the vectors move without charting history
+            // Normally phase is added to time. A pure visual update is handled in loop automatically.
+            // But changing phase mid-flight causes a jump in the wave. That's physically correct (phase shift).
+        }
+
+        sliderW.addEventListener('input', updateFromUI);
+        sliderPhi.addEventListener('input', updateFromUI);
+
+        btnPlayPause.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlayPause.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Pausar</span>';
+                btnPlayPause.classList.add('active');
+            } else {
+                btnPlayPause.innerHTML = '<i class="fa-solid fa-play"></i> <span>Reanudar</span>';
+                btnPlayPause.classList.remove('active');
+            }
+        });
+
+        // INIT
+        resize();
+        updateFromUI();
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+
+</html>
