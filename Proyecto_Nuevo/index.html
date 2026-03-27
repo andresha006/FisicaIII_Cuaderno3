@@ -18,6 +18,10 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+  <!-- Syntax Highlighting (Highlight.js) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
@@ -494,26 +498,34 @@
       <!-- ── Videos Guía ── -->
       <h2 class="view-title" style="margin-top: 40px;"><i class="fas fa-play-circle" style="color:var(--neon-blue)"></i> Videos Guía</h2>
       <div class="video-grid">
-        <div class="video-card">
-          <a href="https://www.youtube.com/watch?v=0lr4BcryLmg" target="_blank" style="text-decoration:none; display:block; position:relative;">
-            <div class="video-wrapper"><img src="imagenes/video movimiento armonico simple.png" alt="Video Guía 1" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;color:rgba(255,255,255,0.7);text-shadow:0 0 10px rgba(0,0,0,0.8);"><i class="fas fa-play-circle" style="color:#ff0000; background:#fff; border-radius:50%;"></i></div>
-          </a>
-          <div class="anim-info"><h3>Movimiento Armónico Simple</h3><p>Conceptos fundamentales del MAS explicados</p></div>
-        </div>
-        <div class="video-card">
-          <a href="https://www.youtube.com/watch?v=BOII-YORy7s" target="_blank" style="text-decoration:none; display:block; position:relative;">
-            <div class="video-wrapper"><img src="imagenes/video movimiento oscilatorio.png" alt="Video Guía 2" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;color:rgba(255,255,255,0.7);text-shadow:0 0 10px rgba(0,0,0,0.8);"><i class="fas fa-play-circle" style="color:#ff0000; background:#fff; border-radius:50%;"></i></div>
-          </a>
-          <div class="anim-info"><h3>Ondas y Oscilaciones</h3><p>Análisis completo de sistemas oscilatorios</p></div>
+        <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
+          <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+            <a href="https://youtu.be/3b4Vv8zIwt4?si=y4RfqwaY0XDqKJTE" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr1.png" alt="QR Movimiento Ondulatorio" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
+          </div>
+          <div class="anim-info" style="text-align: center; width: 100%;">
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Movimiento Ondulatorio</h3>
+          </div>
         </div>
         <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
           <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-            <img src="imagenes/Qr.png" alt="QR Profe Nestor" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            <a href="https://youtu.be/Opcentm_0RE?si=mkPstKz9bJ4oEPrv" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr2.png" alt="QR Ondas Estacionarias" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
           </div>
           <div class="anim-info" style="text-align: center; width: 100%;">
-            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">canal de youtube profe nestor</h3>
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Ondas Estacionarias</h3>
+          </div>
+        </div>
+        <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
+          <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+            <a href="https://youtu.be/PfL1mqi-uro?si=ZaRrYE_yeviXdsZ3" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr3.png" alt="QR Interferencia de Ondas" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
+          </div>
+          <div class="anim-info" style="text-align: center; width: 100%;">
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Interferencia de Ondas</h3>
           </div>
         </div>
       </div>
@@ -1297,9 +1309,46 @@
       <button class="chat-action-btn" onclick="ChatBot.quickAction('openSimulation')"><i class="fas fa-flask"></i> Laboratorio</button>
       <button class="chat-action-btn" onclick="ChatBot.quickAction('goHome')"><i class="fas fa-home"></i> Inicio</button>
     </div>
-    <div class="chat-input-area">
-      <input type="text" class="chat-input" id="chatInput" placeholder="Escribe tu pregunta de física..." onkeydown="if(event.key==='Enter')ChatBot.send()">
+    
+    <!-- Media Preview Area (hidden by default) -->
+    <div id="chatMediaPreview" style="display:none; padding: 10px; background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); position: relative;">
+      <div id="chatImagePreviewContainer" style="display:none; position: relative; width: fit-content;">
+        <img id="chatImagePreview" src="" alt="Preview" style="max-height: 80px; border-radius: 8px; border: 1px solid var(--border-medium);">
+        <button onclick="ChatBot.clearMedia()" style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px;"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chatAudioIndicator" style="display:none; align-items: center; gap: 10px; color: var(--neon-blue);">
+        <i class="fas fa-microphone fa-pulse"></i> <span>Escuchando...</span>
+      </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="chatFileInput" accept="image/*" style="display:none;" onchange="ChatBot.handleImageSelect(this.files)">
+
+    <!-- Input Area -->
+    <div class="chat-input-area" style="display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated);">
+      <button class="chat-btn-action" title="Adjuntar Archivo" onclick="document.getElementById('chatFileInput').click()"><i class="fas fa-paperclip"></i></button>
+      <button class="chat-btn-action" title="Cámara" onclick="ChatBot.openCamera()"><i class="fas fa-camera"></i></button>
+      <button class="chat-btn-action" id="btnMic" title="Micrófono" onclick="ChatBot.toggleMic()"><i class="fas fa-microphone"></i></button>
+      
+      <input type="text" class="chat-input" id="chatInput" placeholder="Pregunta sobre física..." onkeydown="if(event.key==='Enter')ChatBot.send()" style="flex:1;">
+      
       <button class="chat-send-btn" onclick="ChatBot.send()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- Camera Modal -->
+  <div class="settings-overlay" id="cameraOverlay">
+    <div class="settings-modal" style="text-align:center;">
+      <h3><i class="fas fa-camera" style="color:var(--neon-blue)"></i> Capturar Imagen</h3>
+      <div style="margin: 16px 0; background:#000; border-radius:12px; overflow:hidden; position:relative; min-height: 240px; display:flex; align-items:center; justify-content:center;">
+        <video id="cameraVideo" autoplay playsinline style="width:100%; max-height:300px; display:none;"></video>
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+        <div id="cameraPlaceholder" style="color:var(--text-muted);"><i class="fas fa-video-slash" style="font-size:2rem;margin-bottom:8px;"></i><br>Cámara inactiva</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" id="btnCapture" style="flex:1;" onclick="ChatBot.takePhoto()"><i class="fas fa-circle"></i> Tomar Foto</button>
+        <button class="btn" style="flex:1; background:transparent; color:var(--text-muted); border-color:var(--border-medium)" onclick="ChatBot.closeCamera()">Cancelar</button>
+      </div>
     </div>
   </div>
 
@@ -1396,6 +1445,47 @@
         }
       });
     }
+  </script>
+
+  <!-- THEME SELECTOR -->
+  <div class="theme-selector-wrapper" id="themeSelector">
+    <button class="theme-btn" data-theme="aurora" data-tooltip="Aurora" style="background: linear-gradient(135deg, #050A14, #69F0AE);"></button>
+    <button class="theme-btn" data-theme="neon" data-tooltip="Neon" style="background: linear-gradient(135deg, #000000, #FF007F);"></button>
+    <button class="theme-btn" data-theme="ocean" data-tooltip="Ocean" style="background: linear-gradient(135deg, #0A1628, #00BCD4);"></button>
+    <button class="theme-btn" data-theme="sunset" data-tooltip="Sunset" style="background: linear-gradient(135deg, #1A0A00, #FF6B35);"></button>
+    <button class="theme-btn" data-theme="forest" data-tooltip="Forest" style="background: linear-gradient(135deg, #1B2D1A, #7FD44C);"></button>
+    <button class="theme-btn" data-theme="dark" data-tooltip="Dark" style="background: linear-gradient(135deg, #0E0E10, #00F5FF);"></button>
+    <button class="theme-btn" data-theme="light" data-tooltip="Light" style="background: linear-gradient(135deg, #FAFAF8, #2563EB);"></button>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem('app-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      const themeBtns = document.querySelectorAll('.theme-btn');
+      
+      themeBtns.forEach(btn => {
+        if(btn.dataset.theme === savedTheme) btn.classList.add('active');
+        
+        btn.addEventListener('mouseenter', () => {
+          document.documentElement.setAttribute('data-theme', btn.dataset.theme);
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+          const revertTheme = localStorage.getItem('app-theme') || 'light';
+          document.documentElement.setAttribute('data-theme', revertTheme);
+        });
+        
+        btn.addEventListener('click', () => {
+          const theme = btn.dataset.theme;
+          localStorage.setItem('app-theme', theme);
+          document.documentElement.setAttribute('data-theme', theme);
+          themeBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
   </script>
 </body>
 </html>

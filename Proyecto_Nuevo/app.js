@@ -316,6 +316,10 @@
   window.ChatBot = {
     isOpen: false,
     selectedScientist: null,
+    currentMedia: null,
+    mediaPreview: null,
+    isRecording: false,
+    mediaRecorder: null,
 
     toggle() {
       this.isOpen = !this.isOpen;
@@ -394,30 +398,225 @@
       }, 2600);
     },
 
+    // ── NEW Media functions ──
+    handleImageSelect(files) {
+      if(!files || !files[0]) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.currentMedia = {
+          mimeType: file.type,
+          data: e.target.result.split(',')[1] // base64
+        };
+        this.mediaPreview = e.target.result;
+        document.getElementById('chatMediaPreview').style.display = 'block';
+        document.getElementById('chatImagePreviewContainer').style.display = 'block';
+        document.getElementById('chatImagePreview').src = this.mediaPreview;
+      };
+      reader.readAsDataURL(file);
+    },
+
+    clearMedia() {
+      this.currentMedia = null;
+      this.mediaPreview = null;
+      document.getElementById('chatMediaPreview').style.display = 'none';
+      document.getElementById('chatImagePreviewContainer').style.display = 'none';
+      document.getElementById('chatAudioIndicator').style.display = 'none';
+      document.getElementById('chatFileInput').value = '';
+      
+      if(this.mediaRecorder && this.isRecording) {
+        this.mediaRecorder.stop();
+        this.isRecording = false;
+        document.getElementById('btnMic').classList.remove('recording');
+      }
+    },
+
+    openCamera() {
+      document.getElementById('cameraOverlay').classList.add('open');
+      const video = document.getElementById('cameraVideo');
+      const placeholder = document.getElementById('cameraPlaceholder');
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            video.srcObject = stream;
+            video.style.display = 'block';
+            placeholder.style.display = 'none';
+          })
+          .catch(err => {
+            console.error("Camera error:", err);
+            placeholder.innerHTML = `<i class="fas fa-exclamation-triangle"></i><br>Error al acceder a la cámara`;
+          });
+      } else {
+        placeholder.innerHTML = `<i class="fas fa-video-slash"></i><br>Cámara no soportada`;
+      }
+    },
+
+    closeCamera() {
+      const video = document.getElementById('cameraVideo');
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+      video.style.display = 'none';
+      document.getElementById('cameraPlaceholder').style.display = 'block';
+      document.getElementById('cameraOverlay').classList.remove('open');
+    },
+
+    takePhoto() {
+      const video = document.getElementById('cameraVideo');
+      if (!video.srcObject) return;
+      const canvas = document.getElementById('cameraCanvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      
+      this.currentMedia = {
+        mimeType: 'image/jpeg',
+        data: dataUrl.split(',')[1]
+      };
+      this.mediaPreview = dataUrl;
+      document.getElementById('chatMediaPreview').style.display = 'block';
+      document.getElementById('chatImagePreviewContainer').style.display = 'block';
+      document.getElementById('chatImagePreview').src = this.mediaPreview;
+      
+      this.closeCamera();
+    },
+
+    toggleMic() {
+      if (this.isRecording) {
+        this.mediaRecorder.stop();
+      } else {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          alert("Tu navegador no soporta reconocimiento de voz.");
+          return;
+        }
+        
+        this.mediaRecorder = new SpeechRecognition();
+        this.mediaRecorder.lang = 'es-ES';
+        this.mediaRecorder.interimResults = false;
+        this.mediaRecorder.maxAlternatives = 1;
+        
+        this.mediaRecorder.onstart = () => {
+          this.isRecording = true;
+          document.getElementById('btnMic').classList.add('recording');
+          document.getElementById('chatMediaPreview').style.display = 'block';
+          document.getElementById('chatAudioIndicator').style.display = 'flex';
+        };
+        
+        this.mediaRecorder.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          const input = document.getElementById('chatInput');
+          input.value += (input.value ? ' ' : '') + transcript;
+        };
+        
+        this.mediaRecorder.onerror = (event) => {
+          console.error("Speech recog error", event);
+          this.clearMedia();
+        };
+        
+        this.mediaRecorder.onend = () => {
+          this.isRecording = false;
+          document.getElementById('btnMic').classList.remove('recording');
+          document.getElementById('chatAudioIndicator').style.display = 'none';
+          if(!this.currentMedia) document.getElementById('chatMediaPreview').style.display = 'none';
+        };
+        
+        this.mediaRecorder.start();
+      }
+    },
+
+    formatText(text) {
+      if(!text) return '';
+      // 1. Basic Markdown headers
+      text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      // 2. Bold & Italic
+      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      // 3. Newlines
+      text = text.replace(/\n\n/g, '<br><br>');
+      // 4. Code Blocks
+      text = text.replace(/```(.*?)\n([\s\S]*?)```/g, (match, lang, code) => {
+          if (lang && window.hljs) {
+              try { return `<pre><code class="hljs ${lang}">${window.hljs.highlight(code, {language: lang}).value}</code></pre>`; } catch (e) {}
+          }
+          if (window.hljs) { return `<pre><code class="hljs">${window.hljs.highlightAuto(code).value}</code></pre>`; }
+          return `<pre><code>${code}</code></pre>`;
+      });
+      // 5. Inline code
+      text = text.replace(/`([^`]*)`/g, '<code style="background:rgba(100,100,100,0.3);padding:2px 4px;border-radius:4px;font-family:var(--mono)">$1</code>');
+      return text;
+    },
+
     addBotMessage(text) {
       const msgs = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.className = 'chat-msg bot';
-      div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+      div.innerHTML = `<div class="msg-bubble tex-content">${this.formatText(text)}</div>`;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
+      
+      // Trigger KaTeX render
+      if(window.renderMathInElement) {
+         window.renderMathInElement(div, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '\\[', right: '\\]', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+         });
+      }
     },
 
     addUserMessage(text) {
       const msgs = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.className = 'chat-msg user';
-      div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+      div.innerHTML = `<div class="msg-bubble tex-content">${text}</div>`;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
+      
+      if(window.renderMathInElement) {
+         window.renderMathInElement(div, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '\\[', right: '\\]', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false
+         });
+      }
     },
 
     async send() {
       const input = document.getElementById('chatInput');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !this.currentMedia) return;
       input.value = '';
-      this.addUserMessage(text);
+      
+      // If user uploaded an image, show it in their bubble
+      if (this.mediaPreview) {
+        this.addUserMessage(text + `<br><img src="${this.mediaPreview}" style="max-width:150px; border-radius:8px; margin-top:8px;">`);
+      } else {
+        this.addUserMessage(text);
+      }
+      
+      const payloadParts = [{ text: systemPrompt + '\n\nUsuario: ' + text }];
+      if (this.currentMedia) {
+        payloadParts.push({
+          inlineData: {
+            mimeType: this.currentMedia.mimeType,
+            data: this.currentMedia.data
+          }
+        });
+      }
+      this.clearMedia(); // clear after staging payload
 
       const apiKey = localStorage.getItem('physics_api_key') || 'gen-lang-client-0334339450';
       let provider = localStorage.getItem('physics_api_provider') || 'gemini';
@@ -434,14 +633,13 @@
 
       const sci = SCIENTISTS[this.selectedScientist];
       
-      const uiInstructions = `\n\nIMPORTANTE: Puedes controlar la interfaz de la página. Si el usuario te pide abrir un cuaderno, una animación, ir al inicio o ver una imagen, DEBES incluir al final de tu respuesta uno de los siguientes comandos exactos entre corchetes:
+      // Update System prompt to be math-focused
+      const uiInstructions = `\n\nINSTRUCCIONES CLAVE DE FORMATO: Eres un asistente matemático/físico en una plataforma educativa. DEBES formatear todas las fórmulas matemáticas y física usando sintaxis LaTeX limpia envuelta en $$ para bloques o \\( \\) para código inline. Adicionalmente, usa bloques \`\`\` para código Python u otros lenguajes. NUNCA respondas con marcadores markdown que no soporten LaTeX. Cuando la respuesta implique navegación por temas, DEBES incluir al final de tu respuesta uno de los siguientes comandos interinos exactos y literales entre corchetes:
 - [CMD:openNotebook(1)] (para Cuaderno 1: Movimiento Armónico Simple)
 - [CMD:openNotebook(2)] (para Cuaderno 2: Péndulos)
 - [CMD:openNotebook(3)] (para Cuaderno 3: Ondas Estacionarias e Interferencias)
 - [CMD:openSimulation()] (para Laboratorio Interactivo: Sistema Masa-Resorte)
-- [CMD:openSimulation2()] (para Simulador M.A.S. Ultimate)
-- [CMD:goHome()] (para volver al inicio de la página)
-Si necesitas mostrar imágenes (como un código QR, foto de laboratorio, etc.), hazlo escribiendo la etiqueta HTML: <img src='imagenes/nombre_imagen.png' style='width:100%; border-radius:8px'>. Recuerda, siempre incluye los comandos CMD si la solicitud del usuario implica navegar en la app.`;
+- [CMD:goHome()] (para volver al inicio de la página)`;
       const systemPrompt = sci.system + uiInstructions;
 
       this.addBotMessage('<i class="fas fa-spinner fa-spin"></i> Pensando...');
@@ -453,7 +651,8 @@ Si necesitas mostrar imágenes (como un código QR, foto de laboratorio, etc.), 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: systemPrompt + '\n\nUsuario: ' + text }] }]
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: [{ parts: [{ text: text }, ...(payloadParts.slice(1))] }]
             })
           });
 
