@@ -18,6 +18,10 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+  <!-- Syntax Highlighting (Highlight.js) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
@@ -37,7 +41,7 @@
       <h1 style="font-family:'Outfit',sans-serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:900;background:linear-gradient(135deg,#00f3ff,#39ff14,#ab80ff,#ff6b9d);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:splashGrad 4s ease infinite;margin-bottom:8px;letter-spacing:2px;text-shadow:none;">
         FÍSICA III
       </h1>
-      <p style="font-family:'Inter',sans-serif;font-size:clamp(0.9rem,2vw,1.3rem);color:rgba(255,255,255,0.6);letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">Movimiento Armónico Simple</p>
+      <p style="font-family:'Inter',sans-serif;font-size:clamp(0.9rem,2vw,1.3rem);color:rgba(255,255,255,0.6);letter-spacing:6px;text-transform:uppercase;margin-bottom:30px;">Ondas Estacionarias e Interferencias</p>
 
       <!-- Authors -->
       <div style="display:flex;gap:30px;margin-bottom:35px;flex-wrap:wrap;justify-content:center;">
@@ -53,13 +57,12 @@
 
       <!-- Topics grid -->
       <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:700px;margin-bottom:clamp(20px,5vh,50px);">
-        <span class="splash-topic" style="--delay:0s;">Sistema Masa-Resorte</span>
-        <span class="splash-topic" style="--delay:0.3s;">M.A.S. Ultimate</span>
-        <span class="splash-topic" style="--delay:0.6s;">Cinemática M.A.S.</span>
-        <span class="splash-topic" style="--delay:0.9s;">Energía del M.A.S.</span>
-        <span class="splash-topic" style="--delay:1.2s;">Péndulo Simple</span>
-        <span class="splash-topic" style="--delay:1.5s;">Fuerzas del Péndulo</span>
-        <span class="splash-topic" style="--delay:1.8s;">Función de Onda</span>
+        <span class="splash-topic" style="--delay:0s;">Ondas Cuerda-Masa</span>
+        <span class="splash-topic" style="--delay:0.3s;">Ondas Estacionarias</span>
+        <span class="splash-topic" style="--delay:0.6s;">Cuerda de Guitarra</span>
+        <span class="splash-topic" style="--delay:0.9s;">Líneas Nodales</span>
+        <span class="splash-topic" style="--delay:1.2s;">Interferencia 2D</span>
+        <span class="splash-topic" style="--delay:1.5s;">Función de Onda</span>
       </div>
 
       <!-- COMENZAR button -->
@@ -361,8 +364,6 @@
 
       drawGrid();
       drawParticles();
-      drawPendulum();
-      drawSpring();
       drawWave();
       drawEnergy();
       drawPhasor();
@@ -405,9 +406,24 @@
       <button class="nav-btn">
         <i class="fas fa-cog"></i> <span>Configuración</span>
       </button>
-      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
-        <i class="fas fa-sun" id="themeIcon"></i> <span id="themeLabel">Modo Claro</span>
-      </button>
+      
+      <div style="padding: 10px 15px; margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+        <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;"><i class="fas fa-adjust"></i> Modo Claro / Oscuro</p>
+        <div class="theme-selector-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px;">
+          <button class="nav-btn" onclick="appState.applyTheme('light')" style="justify-content:center;padding:8px;"><i class="fas fa-sun"></i> Claro</button>
+          <button class="nav-btn" onclick="appState.applyTheme('dark')" style="justify-content:center;padding:8px;"><i class="fas fa-moon"></i> Oscuro</button>
+        </div>
+        
+        <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;"><i class="fas fa-palette"></i> Colores</p>
+        <div class="theme-selector-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+          <div class="theme-option" onclick="appState.applyTheme('aurora')" title="Aurora"><div class="theme-circle" style="background:linear-gradient(45deg, #8b5cf6, #ec4899);width:22px;height:22px;border-radius:50%;cursor:pointer;margin:0 auto;"></div></div>
+          <div class="theme-option" onclick="appState.applyTheme('neon')" title="Neón"><div class="theme-circle" style="background:#0f172a;border:2px solid #00f3ff;width:22px;height:22px;border-radius:50%;cursor:pointer;margin:0 auto;"></div></div>
+          <div class="theme-option" onclick="appState.applyTheme('ocean')" title="Océano"><div class="theme-circle" style="background:#006994;width:22px;height:22px;border-radius:50%;cursor:pointer;margin:0 auto;"></div></div>
+          <div class="theme-option" onclick="appState.applyTheme('sunset')" title="Atardecer"><div class="theme-circle" style="background:linear-gradient(45deg, #ff7e5f, #feb47b);width:22px;height:22px;border-radius:50%;cursor:pointer;margin:0 auto;"></div></div>
+          <div class="theme-option" onclick="appState.applyTheme('forest')" title="Bosque"><div class="theme-circle" style="background:#2d4a22;width:22px;height:22px;border-radius:50%;cursor:pointer;margin:0 auto;"></div></div>
+        </div>
+      </div>
+
       <button class="nav-btn btn-danger-outline">
         <i class="fas fa-sign-out-alt"></i> <span>Salir perfil</span>
       </button>
@@ -424,23 +440,12 @@
       <!-- Notebook Grid -->
       <div class="dashboard-grid">
         <div class="dash-card notebook-card" onclick="appState.openNotebook(1)">
-          <div class="dash-icon"><i class="fas fa-book"></i></div>
-          <h3>Cuaderno 1</h3>
-          <p>Movimiento Armónico Simple y Oscilador Masa-Resorte</p>
-          <div class="glow-effect"></div>
-        </div>
-        
-        <div class="dash-card notebook-card" onclick="appState.openNotebook(2)">
-          <div class="dash-icon"><i class="fas fa-book-open"></i></div>
-          <h3>Cuaderno 2</h3>
-          <p>Péndulo Simple, Físico y Torsional</p>
-          <div class="glow-effect"></div>
-        </div>
-
-        <div class="dash-card notebook-card" onclick="appState.openNotebook(3)">
-          <div class="dash-icon"><i class="fas fa-water"></i></div>
-          <h3>Cuaderno 3</h3>
-          <p>Ondas Estacionarias e Interferencia</p>
+          <div class="iframe-preview-wrapper" style="height: 120px; border-radius: 8px; margin-bottom: 15px; overflow: hidden; position: relative;">
+            <iframe src="animaciones/ondas-estacionarias.html" loading="lazy" style="width:100%; height:100%; border:none; pointer-events:none;"></iframe>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:10;"></div>
+          </div>
+          <h3 style="margin-top:0;">Ondas Estacionarias e Interferencias</h3>
+          <p>Cuaderno interactivo sobre Ondas Estacionarias y Superposición.</p>
           <div class="glow-effect"></div>
         </div>
 
@@ -454,422 +459,87 @@
       <h2 class="view-title" style="margin-top: 40px;">Animaciones y Laboratorio</h2>
       <div class="dashboard-grid anim-grid">
 
-        <div class="dash-card anim-card" onclick="appState.openSimulation()">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_resorte.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Sistema Masa-Resorte</h3><p>Laboratorio interactivo Velocity-Verlet</p></div>
+        <!-- Nuevas animaciones de Ondas e Interferencias -->
+        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/ondas-cuerda-masa.html', 'Ondas Cuerda Masa')">
+          <div class="iframe-preview-wrapper"><iframe src="animaciones/ondas-cuerda-masa.html" loading="lazy"></iframe></div>
+          <div class="anim-info"><h3 style="color:var(--neon-blue)">Ondas en Cuerda-Masa</h3><p>Propagación y reflexión en medios densos</p></div>
+        </div>
+        
+        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/ondas-estacionarias.html', 'Ondas Estacionarias')">
+          <div class="iframe-preview-wrapper"><iframe src="animaciones/ondas-estacionarias.html" loading="lazy"></iframe></div>
+          <div class="anim-info"><h3 style="color:var(--neon-green)">Ondas Estacionarias</h3><p>Nodos, antinodos y armónicos en cuerdas</p></div>
         </div>
 
-        <div class="dash-card anim-card" onclick="appState.openSimulation2()">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_fasor_onda.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3 style="color:#06b6d4">M.A.S. Ultimate Pro</h3><p>Onda temporal, fasores y gráficas avanzadas</p></div>
+        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/ondas-guitarra.html', 'Guitarra Acústica')">
+          <div class="iframe-preview-wrapper"><iframe src="animaciones/ondas-guitarra.html" loading="lazy"></iframe></div>
+          <div class="anim-info"><h3 style="color:var(--accent2)">Cuerda de Guitarra</h3><p>Superposición y frecuencias audibles</p></div>
         </div>
 
-        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/animacion_cinematica_mas.html', 'Cinemática M.A.S.')">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_cinematica_mas.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Cinemática M.A.S.</h3><p>Posición, velocidad y aceleración simultáneas</p></div>
+        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/ondas-hiperbolas.html', 'Hipérbolas de Interferencia')">
+          <div class="iframe-preview-wrapper"><iframe src="animaciones/ondas-hiperbolas.html" loading="lazy"></iframe></div>
+          <div class="anim-info"><h3 style="color:#ff6b9d">Líneas Nodales</h3><p>Geometría de la interferencia destructiva</p></div>
         </div>
 
-        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/animacion_energia_mas.html', 'Energía del M.A.S.')">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_energia_mas.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Energía del M.A.S.</h3><p>Cinética, potencial y conservación</p></div>
+        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/ondas-interferencia-2d.html', 'Interferencia 2D')">
+          <div class="iframe-preview-wrapper"><iframe src="animaciones/ondas-interferencia-2d.html" loading="lazy"></iframe></div>
+          <div class="anim-info"><h3 style="color:#ab80ff">Interferencia 2D</h3><p>Patrones de interferencia en depósitos de agua</p></div>
         </div>
 
-        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/animacion_pendulo.html', 'Péndulo Simple')">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_pendulo.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Péndulo Simple</h3><p>Oscilación gravitatoria animada</p></div>
         </div>
-
-        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/animacion_fuerzas_pendulo.html', 'Fuerzas del Péndulo')">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_fuerzas_pendulo.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Fuerzas del Péndulo</h3><p>Análisis vectorial de fuerzas</p></div>
-        </div>
-
-        <div class="dash-card anim-card" onclick="appState.openIframe('animaciones/animacion_funcion_onda.html', 'Función de Onda')">
-          <div class="iframe-preview-wrapper"><iframe src="animaciones/animacion_funcion_onda.html" loading="lazy"></iframe></div>
-          <div class="anim-info"><h3>Función de Onda</h3><p>Propagación ondulatoria espacial</p></div>
-        </div>
-
-      </div>
 
       <!-- ── Videos Guía ── -->
       <h2 class="view-title" style="margin-top: 40px;"><i class="fas fa-play-circle" style="color:var(--neon-blue)"></i> Videos Guía</h2>
       <div class="video-grid">
-        <div class="video-card">
-          <a href="https://www.youtube.com/watch?v=0lr4BcryLmg" target="_blank" style="text-decoration:none; display:block; position:relative;">
-            <div class="video-wrapper"><img src="imagenes/video movimiento armonico simple.png" alt="Video Guía 1" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;color:rgba(255,255,255,0.7);text-shadow:0 0 10px rgba(0,0,0,0.8);"><i class="fas fa-play-circle" style="color:#ff0000; background:#fff; border-radius:50%;"></i></div>
-          </a>
-          <div class="anim-info"><h3>Movimiento Armónico Simple</h3><p>Conceptos fundamentales del MAS explicados</p></div>
-        </div>
-        <div class="video-card">
-          <a href="https://www.youtube.com/watch?v=BOII-YORy7s" target="_blank" style="text-decoration:none; display:block; position:relative;">
-            <div class="video-wrapper"><img src="imagenes/video movimiento oscilatorio.png" alt="Video Guía 2" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;color:rgba(255,255,255,0.7);text-shadow:0 0 10px rgba(0,0,0,0.8);"><i class="fas fa-play-circle" style="color:#ff0000; background:#fff; border-radius:50%;"></i></div>
-          </a>
-          <div class="anim-info"><h3>Ondas y Oscilaciones</h3><p>Análisis completo de sistemas oscilatorios</p></div>
+        <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
+          <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+            <a href="https://youtu.be/3b4Vv8zIwt4?si=y4RfqwaY0XDqKJTE" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr1.png" alt="QR Movimiento Ondulatorio" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
+          </div>
+          <div class="anim-info" style="text-align: center; width: 100%;">
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Movimiento Ondulatorio</h3>
+          </div>
         </div>
         <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
           <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-            <img src="imagenes/Qr.png" alt="QR Profe Nestor" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            <a href="https://youtu.be/Opcentm_0RE?si=mkPstKz9bJ4oEPrv" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr2.png" alt="QR Ondas Estacionarias" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
           </div>
           <div class="anim-info" style="text-align: center; width: 100%;">
-            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">canal de youtube profe nestor</h3>
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Ondas Estacionarias</h3>
+          </div>
+        </div>
+        <div class="video-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);">
+          <div style="width: 100%; aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+            <a href="https://youtu.be/PfL1mqi-uro?si=ZaRrYE_yeviXdsZ3" target="_blank" style="display: block; width: 100%; height: 100%;">
+              <img src="imagenes/qr3.png" alt="QR Interferencia de Ondas" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
+            </a>
+          </div>
+          <div class="anim-info" style="text-align: center; width: 100%;">
+            <h3 style="color: var(--neon-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Interferencia de Ondas</h3>
           </div>
         </div>
       </div>
     </div>
 
 
-    <!-- ── VIEW 2: NOTEBOOK 1 (MAS) ── -->
+    <!-- ── VIEW 4: NOTEBOOK 3 (AMORTIGUADAS) ── -->
     <div id="view-nb1" class="view-panel notebook-view">
       <div class="notebook-header">
         <button class="btn btn-back" onclick="appState.goHome()"><i class="fas fa-arrow-left"></i> Volver al Inicio</button>
-        <h2>Cuaderno 1: Movimiento Armónico Simple</h2>
-        <div class="book-actions"><button class="btn btn-icon" onclick="BookCtrl.fullscreen('nb1')" title="Pantalla completa"><i class="fas fa-expand"></i></button></div>
+        <h2>Cuaderno 1: Ondas Estacionarias e Interferencias</h2>
       </div>
 
-      <div class="book-scene" id="scene-nb1">
+      <div class="book-scene">
         <div class="spiral-spine" id="spine-nb1"></div>
         <div class="book" id="book-nb1">
-
-          <!-- COVER PAGE -->
-          <div class="page" style="z-index:9">
-            <div class="page-front">
-              <div class="book-cover">
-                <h2>Cuaderno 1</h2>
-                <p class="cover-subtitle">Movimiento Armónico Simple</p>
-                <div class="cover-animation">
-                  <div class="cover-pendulum"></div>
-                </div>
-                <div class="cover-wave">
-                  <svg viewBox="0 0 300 40" preserveAspectRatio="none">
-                    <path class="wave-path" d="M0 20 Q25 0 50 20 T100 20 T150 20 T200 20 T250 20 T300 20 T350 20 T400 20" stroke="rgba(0,243,255,0.3)" fill="none" stroke-width="1.5"/>
-                  </svg>
-                </div>
-                <p style="color:var(--text-muted);font-size:0.7rem;margin-top:16px">Haz clic en ▶ para pasar la página</p>
-              </div>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">ii</div>
-              <h3>Índice de Contenido</h3>
-              <ul>
-                <li>Conceptos Fundamentales del MAS</li>
-                <li>Ecuación Diferencial</li>
-                <li>Solución Cinemática General</li>
-                <li>Parámetros Fundamentales</li>
-                <li>Condiciones Iniciales</li>
-                <li>Energía en el MAS</li>
-                <li>Oscilador Masa-Resorte</li>
-                <li>Representación Gráfica</li>
-                <li>Tabla de Fórmulas</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- PAGE 1 -->
-          <div class="page" style="z-index:8">
-            <div class="page-front tex-content">
-              <div class="page-number">1</div>
-              <h3>Conceptos Fundamentales del MAS</h3>
-              <p>Un cuerpo describe un <strong>Movimiento Armónico Simple (MAS)</strong> cuando la fuerza neta sobre él es proporcional y opuesta a su desplazamiento desde el equilibrio. Este tipo de movimiento es periódico y se repite en intervalos regulares de tiempo.</p>
-              <div class="math-block">\[ \vec{F} = -k \vec{x} \]</div>
-              <p>Donde:</p>
-              <ul>
-                <li><strong>$F$</strong>: Fuerza restitutiva (siempre hacia el equilibrio).</li>
-                <li><strong>$k$</strong>: Constante elástica del resorte (N/m).</li>
-                <li><strong>$x$</strong>: Desplazamiento desde la posición de equilibrio (m).</li>
-              </ul>
-              <p>El signo negativo garantiza que la fuerza es <em>restitutiva</em>: siempre empuja al objeto de vuelta a $x=0$. Cuanto mayor sea el desplazamiento, mayor será la fuerza de retorno.</p>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">2</div>
-              <h3>Ecuación Diferencial del MAS</h3>
-              <p>Combinando la Ley de Hooke con la Segunda Ley de Newton $\sum F = ma$ donde $a = \frac{d^2x}{dt^2}$:</p>
-              <div class="math-block">\[ m\frac{d^2x}{dt^2} = -kx \]</div>
-              <p>Reordenando y definiendo la frecuencia angular natural $\omega_0^2 = k/m$:</p>
-              <div class="math-block boxed-eq">\[ \frac{d^2x}{dt^2} + \omega_0^2 x = 0 \]</div>
-              <p>Esta ecuación diferencial lineal homogénea de segundo orden describe completamente el MAS. Su solución requiere dos condiciones iniciales: $x(0)$ y $v(0)$.</p>
-            </div>
-          </div>
-
-          <!-- PAGE 2 -->
-          <div class="page" style="z-index:7">
-            <div class="page-front tex-content">
-              <div class="page-number">3</div>
-              <h3>Solución Cinemática General</h3>
-              <p>La solución general de la ecuación diferencial del MAS es:</p>
-              <div class="math-block boxed-eq">\[ x(t) = A\cos(\omega_0 t + \phi_0) \]</div>
-              <p>Derivando respecto al tiempo obtenemos las funciones cinemáticas:</p>
-              <div class="math-block">\[ v(t) = \frac{dx}{dt} = -A\omega_0\sin(\omega_0 t + \phi_0) \]</div>
-              <div class="math-block">\[ a(t) = \frac{d^2x}{dt^2} = -A\omega_0^2\cos(\omega_0 t + \phi_0) \]</div>
-              <p>Observación importante: $a(t) = -\omega_0^2 x(t)$. La aceleración siempre es proporcional y opuesta a la posición.</p>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">4</div>
-              <h3>Parámetros Fundamentales</h3>
-              <ul>
-                <li><strong>Amplitud $A$</strong>: Máximo desplazamiento desde el equilibrio (m).</li>
-                <li><strong>Frecuencia angular</strong>: $\omega_0 = \sqrt{k/m}$ (rad/s)</li>
-                <li><strong>Periodo</strong>: $T = \frac{2\pi}{\omega_0} = 2\pi\sqrt{\frac{m}{k}}$ (s)</li>
-                <li><strong>Frecuencia</strong>: $f = \frac{1}{T} = \frac{\omega_0}{2\pi}$ (Hz)</li>
-                <li><strong>Fase inicial $\phi_0$</strong>: Depende de las condiciones iniciales.</li>
-              </ul>
-              <p><strong>Nota:</strong> El periodo $T$ y la frecuencia $f$ NO dependen de la amplitud. Esta es una característica fundamental del MAS (isocronismo).</p>
-            </div>
-          </div>
-
-          <!-- PAGE 3 -->
-          <div class="page" style="z-index:6">
-            <div class="page-front tex-content">
-              <div class="page-number">5</div>
-              <h3>Condiciones Iniciales</h3>
-              <p>Las constantes $A$ y $\phi_0$ se determinan a partir de las condiciones iniciales $x_0 = x(0)$ y $v_0 = v(0)$:</p>
-              <div class="math-block">\[ x_0 = A\cos\phi_0 \quad \text{y} \quad v_0 = -A\omega_0\sin\phi_0 \]</div>
-              <p>Resolviendo:</p>
-              <div class="math-block boxed-eq">\[ A = \sqrt{x_0^2 + \left(\frac{v_0}{\omega_0}\right)^2} \]</div>
-              <div class="math-block">\[ \phi_0 = \arctan\left(-\frac{v_0}{\omega_0 x_0}\right) \]</div>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">6</div>
-              <h3>Energía en el MAS</h3>
-              <p>La energía mecánica total es constante e igual a $E = \frac{1}{2}kA^2$:</p>
-              <div class="math-block">\[ E_k = \tfrac{1}{2}mv^2 = \tfrac{1}{2}kA^2\sin^2(\omega_0 t + \phi_0) \]</div>
-              <div class="math-block">\[ E_p = \tfrac{1}{2}kx^2 = \tfrac{1}{2}kA^2\cos^2(\omega_0 t + \phi_0) \]</div>
-              <div class="math-block boxed-eq">\[ E = E_k + E_p = \frac{1}{2}kA^2 = \text{constante} \]</div>
-              <p>Hay una continua conversión entre energía cinética y potencial, pero su suma permanece invariante en ausencia de fuerzas disipativas.</p>
-            </div>
-          </div>
-
-          <!-- PAGE 4 -->
-          <div class="page" style="z-index:5">
-            <div class="page-front tex-content">
-              <div class="page-number">7</div>
-              <h3>Oscilador Masa-Resorte</h3>
-              <p>El sistema masa-resorte es el modelo más simple del MAS:</p>
-              <ul>
-                <li><strong>Horizontal:</strong> $\omega_0 = \sqrt{k/m}$, $T = 2\pi\sqrt{m/k}$</li>
-                <li><strong>Vertical:</strong> La posición de equilibrio se desplaza una distancia $\Delta = mg/k$, pero $\omega_0$ y $T$ son idénticos al caso horizontal.</li>
-              </ul>
-              <p><strong>Combinación de resortes:</strong></p>
-              <div class="math-block">\[ \text{Serie: } \frac{1}{k_{eq}} = \frac{1}{k_1} + \frac{1}{k_2} \]</div>
-              <div class="math-block">\[ \text{Paralelo: } k_{eq} = k_1 + k_2 \]</div>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">8</div>
-              <h3>Representación Gráfica</h3>
-              <div class="illustration-box">
-                <svg viewBox="0 0 440 170" width="100%" class="math-svg">
-                  <defs><marker id="arr1b" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fff"/></marker></defs>
-                  <line x1="20" y1="85" x2="430" y2="85" stroke="#fff" stroke-width="1" marker-end="url(#arr1b)"/>
-                  <line x1="30" y1="160" x2="30" y2="10" stroke="#fff" stroke-width="1" marker-end="url(#arr1b)"/>
-                  <text x="425" y="100" fill="#aaa" font-size="10">t</text>
-                  <path d="M30 25 Q60 25 80 85 T130 145 T180 85 T230 25 T280 85 T330 145 T380 85 T430 25" stroke="var(--neon-blue)" fill="none" stroke-width="2"/>
-                  <text x="432" y="30" fill="var(--neon-blue)" font-size="10">x(t)</text>
-                  <path d="M30 85 Q50 145 80 145 T130 85 T180 25 T230 85 T280 145 T330 85 T380 25 T430 85" stroke="var(--neon-green)" fill="none" stroke-width="2" stroke-dasharray="4,3"/>
-                  <text x="432" y="90" fill="var(--neon-green)" font-size="10">v(t)</text>
-                </svg>
-              </div>
-              <p style="text-align:center;color:var(--text-muted);font-size:0.85rem"><em>$x(t)$ y $v(t)$ están desfasadas $\pi/2$ rad (90°).</em></p>
-            </div>
-          </div>
-
-          <!-- PAGE 5: FORMULA TABLE -->
-          <div class="page" style="z-index:4">
-            <div class="page-front tex-content">
-              <div class="page-number">9</div>
-              <h3 style="color:var(--neon-green)">📋 Tabla de Fórmulas — MAS</h3>
-              <table class="formula-table">
-                <tr><th>Magnitud</th><th>Fórmula</th></tr>
-                <tr><td>Posición</td><td>$x(t) = A\cos(\omega_0 t + \phi_0)$</td></tr>
-                <tr><td>Velocidad</td><td>$v(t) = -A\omega_0\sin(\omega_0 t + \phi_0)$</td></tr>
-                <tr><td>Aceleración</td><td>$a(t) = -\omega_0^2 x(t)$</td></tr>
-                <tr><td>Frec. angular</td><td>$\omega_0 = \sqrt{k/m}$</td></tr>
-                <tr><td>Periodo</td><td>$T = 2\pi\sqrt{m/k}$</td></tr>
-                <tr><td>E. Cinética</td><td>$E_k = \frac{1}{2}mv^2$</td></tr>
-                <tr><td>E. Potencial</td><td>$E_p = \frac{1}{2}kx^2$</td></tr>
-                <tr><td>E. Total</td><td>$E = \frac{1}{2}kA^2$</td></tr>
-                <tr><td>Amplitud</td><td>$A = \sqrt{x_0^2 + (v_0/\omega_0)^2}$</td></tr>
-              </table>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">10</div>
-              <h3>Relaciones Importantes</h3>
-              <ul>
-                <li>$v_{max} = A\omega_0$ (en el equilibrio)</li>
-                <li>$a_{max} = A\omega_0^2$ (en los extremos)</li>
-                <li>$v = \pm\omega_0\sqrt{A^2 - x^2}$</li>
-              </ul>
-              <div class="math-block boxed-eq">\[ E_k + E_p = \frac{1}{2}kA^2 = \text{cte} \]</div>
-              <p style="text-align:center;margin-top:20px;color:var(--text-muted)"><em>— Fin del Cuaderno 1 —</em></p>
-            </div>
-          </div>
-
-        </div><!-- /.book -->
-
-        <!-- Floating Toolbar -->
-        <div class="book-toolbar">
-          <button class="tb-btn" onclick="BookCtrl.goToStart('nb1')" title="Portada"><i class="fas fa-home"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.prev('nb1')" title="Anterior"><i class="fas fa-chevron-left"></i></button>
-          <span class="page-indicator" id="page-ind-nb1">Pág 1-2 / 10</span>
-          <button class="tb-btn" onclick="BookCtrl.next('nb1')" title="Siguiente"><i class="fas fa-chevron-right"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.fullscreen('nb1')" title="Pantalla completa"><i class="fas fa-expand"></i></button>
-        </div>
-      </div>
-
-      <div class="notebook-footer">
-        <button class="btn btn-primary" onclick="appState.goHome()"><i class="fas fa-sign-out-alt"></i> Salir del Cuaderno</button>
-      </div>
-    </div>
-
-
-    <!-- ── VIEW 3: NOTEBOOK 2 (PÉNDULOS) ── -->
-    <div id="view-nb2" class="view-panel notebook-view">
-      <div class="notebook-header">
-        <button class="btn btn-back" onclick="appState.goHome()"><i class="fas fa-arrow-left"></i> Volver al Inicio</button>
-        <h2>Cuaderno 2: Péndulo Simple, Físico y Torsional</h2>
-      </div>
-
-      <div class="book-scene">
-        <div class="spiral-spine" id="spine-nb2"></div>
-
-        <div class="book" id="book-nb2">
-
-          <!-- COVER PAGE -->
-          <div class="page" style="z-index:6">
-            <div class="page-front">
-              <div class="book-cover">
-                <h2>Cuaderno 2</h2>
-                <p class="cover-subtitle">Péndulo Simple, Físico y Torsional</p>
-                <div class="cover-animation">
-                  <div class="cover-spring"></div>
-                </div>
-                <p style="color:var(--text-muted);font-size:0.7rem;margin-top:40px">Haz clic en ▶ para pasar la página</p>
-              </div>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">ii</div>
-              <h3>Índice de Contenido</h3>
-              <ul>
-                <li>El Péndulo Simple</li>
-                <li>Diagrama de Fuerzas</li>
-                <li>El Péndulo Físico</li>
-                <li>Péndulo de Torsión</li>
-                <li>Tabla de Fórmulas</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- PAGE 1 -->
-          <div class="page" style="z-index:5">
-            <div class="page-front tex-content">
-              <div class="page-number">1</div>
-              <h3>El Péndulo Simple</h3>
-              <p>Un péndulo simple consiste en una masa puntual $m$ suspendida de un hilo inextensible de longitud $L$ y masa despreciable.</p>
-              <p>La fuerza tangencial restauradora es:</p>
-              <div class="math-block">\[ F_t = -mg\sin\theta \]</div>
-              <p>Para ángulos pequeños ($\sin\theta \approx \theta$):</p>
-              <div class="math-block">\[ F_t \approx -\frac{mg}{L}s \]</div>
-              <div class="math-block boxed-eq">\[ T = 2\pi\sqrt{\frac{L}{g}} \]</div>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">2</div>
-              <h3>Diagrama de Fuerzas</h3>
-              <div class="illustration-box" style="text-align:center">
-                <svg viewBox="0 0 200 230" width="180" class="math-svg">
-                  <defs><marker id="arr2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fff"/></marker></defs>
-                  <line x1="50" y1="15" x2="150" y2="15" stroke="#fff" stroke-width="3"/>
-                  <line x1="100" y1="15" x2="100" y2="200" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4,4"/>
-                  <line x1="100" y1="15" x2="148" y2="165" stroke="var(--neon-blue)" stroke-width="2"/>
-                  <circle cx="148" cy="165" r="12" fill="var(--neon-green)"/>
-                  <line x1="148" y1="165" x2="148" y2="215" stroke="#ff5252" stroke-width="2" marker-end="url(#arr2)"/>
-                  <text x="153" y="222" fill="#ff5252" font-size="11">mg</text>
-                  <line x1="148" y1="165" x2="115" y2="185" stroke="var(--neon-blue)" stroke-width="2" marker-end="url(#arr2)"/>
-                  <text x="88" y="198" fill="var(--neon-blue)" font-size="10">-mg sinθ</text>
-                  <path d="M100 65 A50 50 0 0 1 115 63" fill="none" stroke="#fff" stroke-width="1.2"/>
-                  <text x="108" y="56" fill="#fff" font-size="12" font-style="italic">θ</text>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- PAGE 2 -->
-          <div class="page" style="z-index:4">
-            <div class="page-front tex-content">
-              <div class="page-number">3</div>
-              <h3>El Péndulo Físico</h3>
-              <p>Un péndulo físico es cualquier cuerpo rígido real que oscila alrededor de un eje fijo:</p>
-              <div class="math-block">\[ \sum\tau = I\alpha \;\Rightarrow\; -mgd\sin\theta = I\frac{d^2\theta}{dt^2} \]</div>
-              <p>Para pequeñas oscilaciones ($\sin\theta\approx\theta$):</p>
-              <div class="math-block boxed-eq">\[ \omega = \sqrt{\frac{mgd}{I}} \quad T = 2\pi\sqrt{\frac{I}{mgd}} \]</div>
-              <p>Donde $I$ es el momento de inercia alrededor del pivote y $d$ la distancia al centro de masa.</p>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">4</div>
-              <h3>Péndulo de Torsión</h3>
-              <p>Un péndulo de torsión consiste en un disco u objeto suspendido por un alambre. El torque restaurador es proporcional al ángulo de torsión $\theta$:</p>
-              <div class="math-block">\[ \tau = -\kappa\theta \]</div>
-              <p>Donde $\kappa$ es la constante de torsión del alambre. La ecuación de movimiento es:</p>
-              <div class="math-block">\[ I\frac{d^2\theta}{dt^2} = -\kappa\theta \]</div>
-              <div class="math-block boxed-eq">\[ T = 2\pi\sqrt{\frac{I}{\kappa}} \]</div>
-            </div>
-          </div>
-
-          <!-- PAGE 3: FORMULA TABLE -->
-          <div class="page" style="z-index:3">
-            <div class="page-front tex-content">
-              <div class="page-number">5</div>
-              <h3 style="color:var(--neon-green)">📋 Tabla de Fórmulas — Péndulos</h3>
-              <table class="formula-table">
-                <tr><th>Tipo</th><th>Periodo $T$</th></tr>
-                <tr><td>P. Simple</td><td>$T = 2\pi\sqrt{L/g}$</td></tr>
-                <tr><td>P. Físico</td><td>$T = 2\pi\sqrt{I/(mgd)}$</td></tr>
-                <tr><td>P. Torsión</td><td>$T = 2\pi\sqrt{I/\kappa}$</td></tr>
-              </table>
-              <p style="margin-top:12px"><strong>Relaciones clave:</strong></p>
-              <ul>
-                <li>$\omega_{simple} = \sqrt{g/L}$</li>
-                <li>Para ángulos pequeños: $\sin\theta \approx \theta$</li>
-                <li>Red. de Kater: $g = \frac{4\pi^2 L}{T^2}$</li>
-              </ul>
-            </div>
-            <div class="page-back tex-content">
-              <div class="page-number">6</div>
-              <p style="text-align:center;margin-top:40%;color:var(--text-muted)"><em>— Fin del Cuaderno 2 —</em></p>
-            </div>
-          </div>
-        </div><!-- /.book -->
-
-        <!-- Floating Toolbar -->
-        <div class="book-toolbar">
-          <button class="tb-btn" onclick="BookCtrl.goToStart('nb2')" title="Portada"><i class="fas fa-home"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.prev('nb2')" title="Anterior"><i class="fas fa-chevron-left"></i></button>
-          <span class="page-indicator" id="page-ind-nb2">Pág 1-2 / 6</span>
-          <button class="tb-btn" onclick="BookCtrl.next('nb2')" title="Siguiente"><i class="fas fa-chevron-right"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.fullscreen('nb2')" title="Pantalla completa"><i class="fas fa-expand"></i></button>
-        </div>
-      </div>
-
-      <div class="notebook-footer">
-        <button class="btn btn-primary" onclick="appState.goHome()"><i class="fas fa-sign-out-alt"></i> Salir del Cuaderno</button>
-      </div>
-    </div>
-
-    <!-- ── VIEW 4: NOTEBOOK 3 (AMORTIGUADAS) ── -->
-    <div id="view-nb3" class="view-panel notebook-view">
-      <div class="notebook-header">
-        <button class="btn btn-back" onclick="appState.goHome()"><i class="fas fa-arrow-left"></i> Volver al Inicio</button>
-        <h2>Cuaderno 3: Ondas Estacionarias e Interferencias</h2>
-      </div>
-
-      <div class="book-scene">
-        <div class="spiral-spine" id="spine-nb3"></div>
-        <div class="book" id="book-nb3">
 
           <!-- COVER PAGE -->
           <div class="page" style="z-index:12">
             <div class="page-front">
               <div class="book-cover">
-                <h2>Cuaderno 3</h2>
+                <h2>Cuaderno 1</h2>
                 <p class="cover-subtitle">Ondas Estacionarias e Interferencias</p>
                 <div class="cover-animation">
                   <div class="cover-wave">
@@ -926,7 +596,8 @@
               <div class="page-number">3</div>
               <h3>Condiciones de Contorno</h3>
               <p>Si la cuerda tiene longitud $L$ y ambos extremos son fijos, entonces el otro extremo $x=L$ también es un nodo:</p>
-              <div class="math-block">\[ kL = n\pi \implies \left(rac{2\pi}{\lambda}ight)L = n\pi \]</div>
+              <div class="math-block">\[ kL = n\pi \implies \left(rac{2\pi}{\lambda}
+ight)L = n\pi \]</div>
               <p>Despejando $\lambda$, obtenemos las longitudes de onda permitidas:</p>
               <div class="math-block boxed-eq">\[ \lambda = rac{2L}{n} \quad 	ext{para } n=1,2,3,\dots \]</div>
               <p>Esto limita las frecuencias de oscilación a los armónicos:</p>
@@ -939,7 +610,8 @@
               <div class="math-block boxed-eq">\[ v = \sqrt{rac{F}{\mu}} \]</div>
               <p>Donde $F$ es la tensión de la cuerda y $\mu = m/L$ es la densidad lineal de masa.</p>
               <p>Demostración por fuerza centrípeta en el lomo de un pulso:</p>
-              <div class="math-block">\[ 2 F 	heta = rac{\Delta m v^2}{r} \implies 2 F \left(rac{\Delta s/2}{r}ight) = rac{\mu \Delta s v^2}{r} \]</div>
+              <div class="math-block">\[ 2 F 	heta = rac{\Delta m v^2}{r} \implies 2 F \left(rac{\Delta s/2}{r}
+ight) = rac{\mu \Delta s v^2}{r} \]</div>
               <p>Simplificando se obtiene $F = \mu v^2$, que nos da la fórmula de la velocidad.</p>
             </div>
           </div>
@@ -1011,17 +683,17 @@
             </div>
             <div class="page-back tex-content">
               <div class="page-number">10</div>
-              <p style="text-align:center;margin-top:40%;color:var(--text-muted)"><em>— Fin del Cuaderno 3 —</em></p>
+              <p style="text-align:center;margin-top:40%;color:var(--text-muted)"><em>— Fin del Cuaderno 1 —</em></p>
             </div>
           </div>
 
         </div>
         <div class="book-toolbar">
-          <button class="tb-btn" onclick="BookCtrl.goToStart('nb3')" title="Portada"><i class="fas fa-home"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.prev('nb3')" title="Anterior"><i class="fas fa-chevron-left"></i></button>
-          <span class="page-indicator" id="page-ind-nb3">Pág 1-2 / 10</span>
-          <button class="tb-btn" onclick="BookCtrl.next('nb3')" title="Siguiente"><i class="fas fa-chevron-right"></i></button>
-          <button class="tb-btn" onclick="BookCtrl.fullscreen('nb3')" title="Pantalla completa"><i class="fas fa-expand"></i></button>
+          <button class="tb-btn" onclick="BookCtrl.goToStart('nb1')" title="Portada"><i class="fas fa-home"></i></button>
+          <button class="tb-btn" onclick="BookCtrl.prev('nb1')" title="Anterior"><i class="fas fa-chevron-left"></i></button>
+          <span class="page-indicator" id="page-ind-nb1">Pág 1-2 / 10</span>
+          <button class="tb-btn" onclick="BookCtrl.next('nb1')" title="Siguiente"><i class="fas fa-chevron-right"></i></button>
+          <button class="tb-btn" onclick="BookCtrl.fullscreen('nb1')" title="Pantalla completa"><i class="fas fa-expand"></i></button>
         </div>
       </div>
 
@@ -1030,217 +702,7 @@
       </div>
     </div>
     
-    <!-- ── VIEW 4: SIMULATION (MAS) ── -->
-    <div id="view-sim" class="view-panel">
-      <div class="notebook-header" style="margin-bottom: 20px;">
-        <button class="btn btn-back" onclick="appState.goHome()"><i class="fas fa-arrow-left"></i> Volver al Inicio</button>
-        <h2><i class="fas fa-flask"></i> Laboratorio Interactivo: Sistema Masa-Resorte</h2>
-      </div>
 
-      <div class="app-container" style="padding: 0; min-height: auto; max-width: 100%;">
-        <!-- Left: Simulation -->
-        <div class="sim-area">
-          <div class="card sim-focused-card">
-            <div class="canvas-wrap">
-              <canvas id="simCanvas"></canvas>
-              <div class="canvas-overlay">
-                <span class="canvas-badge" id="canvasStatus">⏸ PAUSA</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card panel-neon">
-            <div class="card-body" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-              <div class="toggle-wrap">
-                <div class="toggle" id="toggleAnim"></div>
-                <span class="toggle-label" id="toggleLabel">Pausado</span>
-              </div>
-              <button class="btn btn-danger btn-sm" id="btnReset"><i class="fas fa-redo"></i> Reiniciar</button>
-              <div class="control-group" style="flex:1;min-width:160px">
-                <div class="control-label"><span><i class="fas fa-wave-square"></i> Constante k</span><span class="val" id="kVal">20.0</span> <span class="unit">N/m</span></div>
-                <input type="range" id="kSlider" min="1" max="200" step="0.5" value="20">
-              </div>
-              <div class="control-group" style="flex:1;min-width:140px">
-                <div class="control-label"><span><i class="fas fa-weight-hanging"></i> Masa m</span><span class="val" id="massVal">2.00</span> <span class="unit">kg</span></div>
-                <input type="range" id="massSlider" min="0.1" max="20" step="0.05" value="2">
-              </div>
-              <div class="control-group" style="flex:1;min-width:140px">
-                <div class="control-label"><span><i class="fas fa-arrows-alt-h"></i> Escala F</span><span class="val" id="scaleVal">1.0</span> <span class="unit">×</span></div>
-                <input type="range" id="scaleSlider" min="0.1" max="5" step="0.1" value="1">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Side Panel -->
-        <div class="side-panel">
-          <div class="card panel-neon">
-            <div class="card-header"><i class="fas fa-tachometer-alt"></i> Variables Dinámicas</div>
-            <div class="card-body">
-              <div class="data-grid">
-                <div class="data-item"><div class="label">Fuerza elástica</div><div class="value clr-force" id="dForce">0.000 N</div></div>
-                <div class="data-item"><div class="label">Elongación (x)</div><div class="value clr-elong" id="dElong">0.0000 m</div></div>
-                <div class="data-item"><div class="label">Velocidad</div><div class="value clr-vel" id="dVel">0.0000 m/s</div></div>
-                <div class="data-item"><div class="label">Aceleración</div><div class="value clr-acc" id="dAcc">0.000 m/s²</div></div>
-                <div class="data-item"><div class="label">Energía Cinética</div><div class="value clr-ke" id="dKE">0.0000 J</div></div>
-                <div class="data-item"><div class="label">Energía Potencial</div><div class="value clr-pe" id="dPE">0.0000 J</div></div>
-                <!-- Mechanical Energy Total (Constant) -->
-                <div class="data-item full" style="text-align: center; border-color: var(--neon-blue); background: rgba(0, 243, 255, 0.05);"><div class="label" style="color: var(--neon-blue)">Energía Mecánica Total</div><div class="value" id="dTE" style="color: #fff; font-size: 1.1rem;">0.0000 J</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card panel-neon">
-            <div class="card-header"><i class="fas fa-chart-line"></i> Gráficas (GeoGebra Style)</div>
-            <div class="card-body graphs-section">
-              <div class="graph-trigger" id="trig_elongation"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--neon-blue)"></span>Elongación x(t)</span><i class="fas fa-expand"></i></div>
-              <div class="graph-trigger" id="trig_velocity"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--neon-green)"></span>Velocidad v(t)</span><i class="fas fa-expand"></i></div>
-              <div class="graph-trigger" id="trig_acceleration"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#ffab40"></span>Aceleración a(t)</span><i class="fas fa-expand"></i></div>
-              <div class="graph-trigger" id="trig_kinetic"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#ff6b9d"></span>Energía Cinética Ek(t)</span><i class="fas fa-expand"></i></div>
-              <div class="graph-trigger" id="trig_potential"><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#ab80ff"></span>Energía Potencial Ep(t)</span><i class="fas fa-expand"></i></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── VIEW 5: SIMULATION 2 (MAS ULTIMATE) ── -->
-    <div id="view-sim2" class="view-panel" style="padding: 0; position: relative;">
-      
-      <style>
-        /* Scoped styles for Sim 2 */
-        #view-sim2 {
-            --primary: #8b5cf6;
-            --secondary: #ec4899;
-            --accent2: #06b6d4;
-            --bg-dark-sim: #0f172a;
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-sim: #f1f5f9;
-            --text-muted-sim: #94a3b8;
-            background-color: var(--bg-dark-sim);
-            color: var(--text-sim);
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .aurora-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-            background: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
-                        radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 25%);
-            animation: aurora-move 10s ease-in-out infinite alternate;
-        }
-        @keyframes aurora-move { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 1; } }
-
-        .app-container-sim2 {
-            display: flex; position: relative; padding: 16px; gap: 16px; height: 100%; z-index: 2;
-        }
-
-        .control-panel-sim2 {
-            width: 340px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;
-            display: flex; flex-direction: column; gap: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            margin-top: 60px; /* Space for back button */
-        }
-        .control-panel-sim2 h1 {
-            font-size: 1.4rem; font-weight: 600;
-            background: linear-gradient(135deg, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            display: flex; align-items: center; gap: 12px; margin-bottom: 5px;
-        }
-        .control-panel-sim2 .subtitle { font-size: 0.8rem; color: var(--text-muted-sim); margin-top: -5px; }
-
-        .control-group-sim2 { display: flex; flex-direction: column; gap: 10px; }
-        .label-row-sim2 { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted-sim); align-items: center; }
-        .value-badge-sim2 { background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 6px; color: var(--accent2); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; border: 1px solid var(--glass-border); }
-
-        .control-group-sim2 input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; outline: none; transition: background 0.3s; }
-        .control-group-sim2 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--bg-dark-sim); border: 2px solid var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); transition: transform 0.2s, background 0.2s; }
-        .control-group-sim2 input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); background: var(--primary); }
-
-        .toggles-wrapper-sim2 { display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); }
-        .toggle-row-sim2 { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; }
-        
-        .switch-sim2 { position: relative; display: inline-block; width: 46px; height: 26px; }
-        .switch-sim2 input { opacity: 0; width: 0; height: 0; }
-        .slider-sim2 { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.1); transition: .4s; border-radius: 34px; }
-        .slider-sim2:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .switch-sim2 input:checked + .slider-sim2 { background-color: var(--secondary); }
-        .switch-sim2 input:checked + .slider-sim2:before { transform: translateX(20px); }
-
-        .canvas-wrapper-sim2 { flex: 1; position: relative; background: rgba(0, 0, 0, 0.2); border-radius: 20px; border: 1px solid var(--glass-border); overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.3); cursor: grab; margin-top: 60px; }
-        .canvas-wrapper-sim2:active { cursor: grabbing; }
-        .canvas-wrapper-sim2 canvas { width: 100%; height: 100%; display: block; }
-
-        .toolbar-sim2 { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; }
-        .tool-btn-sim2 { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); backdrop-filter: blur(5px); color: var(--text-sim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
-        .tool-btn-sim2:hover { background: var(--text-sim); color: var(--bg-dark-sim); transform: translateX(-2px); }
-
-        .math-display-sim2 { position: absolute; bottom: 24px; left: 24px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 12px; border: 1px solid var(--glass-border); border-left: 4px solid var(--accent2); font-size: 1.1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: none; }
-        @media (max-width: 768px) { .app-container-sim2 { flex-direction: column-reverse; padding: 10px; } .control-panel-sim2 { width: 100%; } }
-      </style>
-
-      <div class="aurora-bg"></div>
-      
-      <!-- Overlaid back button -->
-      <div style="position: absolute; top: 16px; left: 24px; z-index: 100;">
-        <button class="btn btn-back" onclick="appState.goHome()" style="background: rgba(15,23,42,0.8); backdrop-filter: blur(8px); border-color: rgba(255,255,255,0.2);"><i class="fas fa-arrow-left"></i> Volver al Inicio</button>
-      </div>
-
-      <div class="app-container-sim2">
-          <!-- PANEL DE CONTROL -->
-          <aside class="control-panel-sim2">
-              <div>
-                  <h1><i data-lucide="atom"></i> Simulador M.A.S.</h1>
-                  <p class="subtitle">Física Interactiva Full Stack</p>
-              </div>
-              
-              <hr style="border:0; border-top:1px solid rgba(255,255,255,0.08);">
-
-              <div class="control-group-sim2">
-                  <div class="label-row-sim2"><span><i data-lucide="maximize-2" size="14"></i> Amplitud (A)</span><span class="value-badge-sim2" id="val-a-sim2">2.0</span></div>
-                  <input type="range" id="input-a-sim2" min="0.5" max="4.0" step="0.1" value="2.0">
-              </div>
-              <div class="control-group-sim2">
-                  <div class="label-row-sim2"><span><i data-lucide="activity" size="14"></i> Frecuencia (&omega;)</span><span class="value-badge-sim2" id="val-w-sim2">1.0</span></div>
-                  <input type="range" id="input-w-sim2" min="0.1" max="5.0" step="0.1" value="1.0">
-              </div>
-              <div class="control-group-sim2">
-                  <div class="label-row-sim2"><span><i data-lucide="clock" size="14"></i> Fase Inicial (&phi;)</span><span class="value-badge-sim2" id="val-p-sim2">0.00</span></div>
-                  <input type="range" id="input-p-sim2" min="-3.14" max="3.14" step="0.01" value="0.00">
-              </div>
-
-              <hr style="border:0; border-top:1px solid rgba(255,255,255,0.08);">
-
-              <div class="toggles-wrapper-sim2">
-                  <div class="toggle-row-sim2">
-                      <span><i data-lucide="play" size="16"></i> Simulación Activa</span>
-                      <label class="switch-sim2"><input type="checkbox" id="toggle-play-sim2" checked><span class="slider-sim2"></span></label>
-                  </div>
-                  <div class="toggle-row-sim2">
-                      <span><i data-lucide="waves" size="16"></i> Mostrar Onda Temporal</span>
-                      <label class="switch-sim2"><input type="checkbox" id="toggle-graph-sim2" checked><span class="slider-sim2"></span></label>
-                  </div>
-                  <div class="toggle-row-sim2">
-                      <span><i data-lucide="circle-dashed" size="16"></i> Círculo de Referencia</span>
-                      <label class="switch-sim2"><input type="checkbox" id="toggle-phasor-sim2"><span class="slider-sim2"></span></label>
-                  </div>
-              </div>
-          </aside>
-
-          <!-- LIENZO INTERACTIVO -->
-          <main class="canvas-wrapper-sim2" id="sim2-canvas-container">
-              <canvas id="simCanvas2"></canvas>
-              
-              <div class="toolbar-sim2">
-                  <div class="tool-btn-sim2" id="btn-reset-sim2" title="Restablecer Vista"><i data-lucide="rotate-ccw"></i></div>
-                  <div class="tool-btn-sim2" id="btn-zoom-in-sim2" title="Zoom In"><i data-lucide="zoom-in"></i></div>
-                  <div class="tool-btn-sim2" id="btn-zoom-out-sim2" title="Zoom Out"><i data-lucide="zoom-out"></i></div>
-              </div>
-
-              <div class="math-display-sim2" id="math-output-sim2"></div>
-          </main>
-      </div>
-    </div>
     <!-- ── VIEW 5: HTML ANIMATIONS ── -->
     <div id="view-iframe" class="view-panel" style="display:flex;flex-direction:column;height:100vh;">
       <div class="notebook-header" style="flex-shrink:0;">
@@ -1297,9 +759,46 @@
       <button class="chat-action-btn" onclick="ChatBot.quickAction('openSimulation')"><i class="fas fa-flask"></i> Laboratorio</button>
       <button class="chat-action-btn" onclick="ChatBot.quickAction('goHome')"><i class="fas fa-home"></i> Inicio</button>
     </div>
-    <div class="chat-input-area">
-      <input type="text" class="chat-input" id="chatInput" placeholder="Escribe tu pregunta de física..." onkeydown="if(event.key==='Enter')ChatBot.send()">
+    
+    <!-- Media Preview Area (hidden by default) -->
+    <div id="chatMediaPreview" style="display:none; padding: 10px; background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); position: relative;">
+      <div id="chatImagePreviewContainer" style="display:none; position: relative; width: fit-content;">
+        <img id="chatImagePreview" src="" alt="Preview" style="max-height: 80px; border-radius: 8px; border: 1px solid var(--border-medium);">
+        <button onclick="ChatBot.clearMedia()" style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px;"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chatAudioIndicator" style="display:none; align-items: center; gap: 10px; color: var(--neon-blue);">
+        <i class="fas fa-microphone fa-pulse"></i> <span>Escuchando...</span>
+      </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="chatFileInput" accept="image/*" style="display:none;" onchange="ChatBot.handleImageSelect(this.files)">
+
+    <!-- Input Area -->
+    <div class="chat-input-area" style="display:flex; align-items:center; gap:8px; padding:12px; background:var(--bg-elevated);">
+      <button class="chat-btn-action" title="Adjuntar Archivo" onclick="document.getElementById('chatFileInput').click()"><i class="fas fa-paperclip"></i></button>
+      <button class="chat-btn-action" title="Cámara" onclick="ChatBot.openCamera()"><i class="fas fa-camera"></i></button>
+      <button class="chat-btn-action" id="btnMic" title="Micrófono" onclick="ChatBot.toggleMic()"><i class="fas fa-microphone"></i></button>
+      
+      <input type="text" class="chat-input" id="chatInput" placeholder="Pregunta sobre física..." onkeydown="if(event.key==='Enter')ChatBot.send()" style="flex:1;">
+      
       <button class="chat-send-btn" onclick="ChatBot.send()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- Camera Modal -->
+  <div class="settings-overlay" id="cameraOverlay">
+    <div class="settings-modal" style="text-align:center;">
+      <h3><i class="fas fa-camera" style="color:var(--neon-blue)"></i> Capturar Imagen</h3>
+      <div style="margin: 16px 0; background:#000; border-radius:12px; overflow:hidden; position:relative; min-height: 240px; display:flex; align-items:center; justify-content:center;">
+        <video id="cameraVideo" autoplay playsinline style="width:100%; max-height:300px; display:none;"></video>
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+        <div id="cameraPlaceholder" style="color:var(--text-muted);"><i class="fas fa-video-slash" style="font-size:2rem;margin-bottom:8px;"></i><br>Cámara inactiva</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" id="btnCapture" style="flex:1;" onclick="ChatBot.takePhoto()"><i class="fas fa-circle"></i> Tomar Foto</button>
+        <button class="btn" style="flex:1; background:transparent; color:var(--text-muted); border-color:var(--border-medium)" onclick="ChatBot.closeCamera()">Cancelar</button>
+      </div>
     </div>
   </div>
 
@@ -1382,6 +881,10 @@
     </div>
   </div>
 
+  
+
+
+
   <script src="app.js"></script>
   <script>
     // Configuración inicial del chatbot
@@ -1396,6 +899,19 @@
         }
       });
     }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem('app-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      if (!window.appState) window.appState = {};
+      window.appState.applyTheme = function(theme) {
+        localStorage.setItem('app-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+      };
+    });
   </script>
 </body>
 </html>
